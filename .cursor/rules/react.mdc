@@ -1,0 +1,106 @@
+---
+description: Regras para desenvolvimento com React
+alwaysApply: true
+---
+
+---
+
+# React
+
+- Utilizar React com TypeScript.
+- Preferir componentes funcionais.
+- Utilizar **sempre named exports** para componentes.
+- **Não utilizar `export default` para componentes.**
+- Componentes devem ser exportados explicitamente usando `export function` ou `export const`.
+
+## Componentes
+
+- Manter os componentes pequenos e com responsabilidades bem definidas.
+- Preferir composição de componentes em vez de componentes excessivamente configuráveis.
+- Utilizar `children` quando a composição for mais adequada do que criar props específicas para conteúdo.
+- Evitar componentes excessivamente genéricos ou abstrações prematuras.
+- Não criar componentes apenas para encapsular lógica ou markup que não possua reutilização ou responsabilidade própria.
+- Respeitar a arquitetura e os padrões já existentes no projeto.
+- Antes de criar um novo componente, verificar se já existe um componente que possa ser reutilizado.
+
+## Custom Hooks
+
+- **Priorizar o uso de custom hooks para encapsular lógica reutilizável ou complexa.**
+- Quando uma lógica de componente envolver estado, efeitos, subscriptions, eventos, processamento de dados ou outras regras que possam ser isoladas, avaliar primeiro a criação de um custom hook.
+- Custom hooks devem seguir obrigatoriamente o padrão `useNomeDoHook`.
+- Custom hooks devem encapsular lógica, e não markup ou apresentação.
+- Componentes devem permanecer focados na apresentação e composição da interface sempre que possível.
+- Evitar colocar lógica de negócio complexa diretamente dentro do componente.
+- Quando a mesma lógica aparecer em mais de um componente, extrair essa lógica para um custom hook ou função reutilizável.
+- Mesmo quando a lógica for utilizada por apenas um componente, considerar um custom hook quando isso melhorar significativamente a legibilidade, organização ou testabilidade.
+- Não criar custom hooks desnecessários para lógica trivial que possa permanecer claramente dentro do componente.
+- Custom hooks não devem retornar JSX.
+- Não utilizar hooks condicionalmente.
+- Não utilizar hooks dentro de loops ou funções aninhadas.
+
+## Estado e efeitos
+
+- Evitar `useEffect` quando a lógica puder ser resolvida durante a renderização, por eventos ou por outras abstrações apropriadas.
+- Não utilizar `useEffect` para derivar estado a partir de outro estado ou de props.
+- Evitar estado local quando o valor puder ser derivado diretamente das props ou de outras fontes de estado.
+- Preferir estado derivado em vez de duplicar dados no estado.
+- Não adicionar `useMemo`, `useCallback` ou `React.memo` sem uma justificativa real de performance.
+- Evitar otimizações prematuras.
+
+## Hooks
+
+- Utilizar hooks do React quando necessário.
+- Hooks devem seguir as Rules of Hooks.
+- Não chamar hooks condicionalmente.
+- Não chamar hooks dentro de loops ou funções aninhadas.
+- Preferir custom hooks quando houver necessidade de reutilizar ou organizar lógica relacionada a hooks.
+
+## Listas
+
+- Utilizar `key` estável ao renderizar listas.
+- Não utilizar o índice do array como `key` quando existir um identificador estável.
+
+## Acessibilidade
+
+- Priorizar acessibilidade nos componentes interativos.
+- Elementos semanticamente interativos devem utilizar elementos HTML apropriados (`button`, `a`, `input`, etc.) em vez de elementos genéricos com handlers.
+- Não remover indicadores de foco sem fornecer uma alternativa acessível.
+
+## Arquitetura
+
+- Componentes não devem conter lógica de negócio complexa.
+- Separar lógica de domínio da camada de apresentação quando necessário.
+- Evitar prop drilling excessivo.
+- Quando houver necessidade real de compartilhamento de estado, avaliar Context ou a solução de gerenciamento de estado utilizada pelo projeto.
+- Não introduzir bibliotecas ou padrões adicionais sem necessidade.
+- Antes de criar uma nova abstração, verificar se uma solução existente no projeto pode ser reutilizada.
+- Evitar duplicação de lógica entre componentes.
+- Preferir funções e custom hooks bem definidos em vez de duplicar lógica.
+
+## Exportações
+
+- **Componentes React devem utilizar exclusivamente named exports.**
+- Preferir:
+
+```tsx
+export function VideoEditor() {
+  return (...)
+}
+```
+
+ou:
+
+```tsx
+export const VideoEditor = () => {
+  return (...)
+}
+```
+
+- Não utilizar:
+
+```tsx
+export default VideoEditor
+```
+
+- Não utilizar `export default` para componentes React mesmo que o framework ou ferramenta permita.
+- Manter o padrão de named exports consistente em todo o projeto.

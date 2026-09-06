@@ -1,0 +1,32 @@
+---
+description: Regras para desenvolvimento com Tailwind CSS
+alwaysApply: true
+---
+
+# Tailwind CSS
+
+- Utilizar Tailwind CSS para estilização dos componentes.
+- Preferir classes utilitárias do Tailwind em vez de CSS tradicional.
+- Evitar criar arquivos CSS separados quando a estilização puder ser feita com Tailwind.
+- Não utilizar estilos inline para estilização visual, salvo quando houver uma necessidade específica.
+- Reutilizar classes e padrões de layout já existentes no projeto.
+- Manter consistência visual entre componentes.
+- Evitar classes Tailwind excessivamente longas quando a lógica puder ser melhor organizada através de componentes ou abstrações apropriadas.
+- Não criar componentes apenas para encapsular um pequeno conjunto de classes sem necessidade.
+- Utilizar as classes responsivas do Tailwind para adaptar a interface a diferentes tamanhos de tela.
+- Pensar primeiro em mobile e utilizar os breakpoints do Tailwind para evoluir o layout para telas maiores quando apropriado.
+- Utilizar as escalas, espaçamentos, tamanhos e cores já definidos pelo projeto.
+- Não introduzir valores arbitrários (`[...]`) quando existir uma classe ou token equivalente no projeto.
+- Valores arbitrários devem ser utilizados somente quando o design realmente exigir um valor específico.
+- Não utilizar cores hardcoded quando o projeto possuir tokens de design equivalentes.
+- Preferir tokens semânticos como `background`, `foreground`, `primary`, `muted`, `border`, etc., quando disponíveis.
+- Utilizar variantes como `hover:`, `focus:`, `active:`, `disabled:` e `group-*` de forma consistente.
+- Estados de foco devem permanecer visíveis e acessíveis.
+- Não remover `outline` ou indicadores de foco sem fornecer uma alternativa acessível.
+- Evitar o uso excessivo de `!important`.
+- Evitar `@apply` quando classes utilitárias diretamente no componente forem suficientes.
+- Utilizar `@apply` apenas quando houver uma necessidade clara de reutilização ou integração com uma abstração existente.
+- Não utilizar Tailwind para resolver problemas que pertencem à lógica do componente.
+- Manter as classes organizadas e legíveis.
+- Ao modificar um componente existente, preservar os padrões visuais já utilizados naquele componente e nas interfaces próximas.
+- Antes de criar novos tokens, cores ou padrões de espaçamento, verificar a configuração/theme existente do Tailwind.
