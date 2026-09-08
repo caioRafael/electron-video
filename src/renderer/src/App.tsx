@@ -1,35 +1,43 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import { Versions } from './components/Versions'
 
-function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+export function App(): React.JSX.Element {
+  const handlePing = (): void => {
+    window.electron.ipcRenderer.send('ping')
+  }
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
-      </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+    <main className="flex min-h-svh items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Video Lab Desktop</CardTitle>
+          <CardDescription>
+            shadcn/ui initialized with the Lyra preset, emerald theme, IBM Plex Sans, and Phosphor
+            icons.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Add more components with{' '}
+            <code className="rounded-none bg-muted px-1 py-0.5 font-medium">
+              pnpm dlx shadcn@latest add [component]
+            </code>
+            .
+          </p>
+        </CardContent>
+        <CardFooter className="justify-between gap-2">
+          <Versions />
+          <Button onClick={handlePing}>Send IPC</Button>
+        </CardFooter>
+      </Card>
+    </main>
   )
 }
-
-export default App
