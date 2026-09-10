@@ -9,78 +9,13 @@ alwaysApply: true
 
 - Utilizar React com TypeScript.
 - Preferir componentes funcionais.
-- Utilizar **sempre named exports** para componentes.
+- **Todos os componentes React devem utilizar named exports.**
+- **Utilizar `export function` para declarar componentes.**
+- **Não utilizar arrow functions para declarar componentes React.**
 - **Não utilizar `export default` para componentes.**
-- Componentes devem ser exportados explicitamente usando `export function` ou `export const`.
+- Manter consistência com os padrões existentes no projeto.
 
-## Componentes
-
-- Manter os componentes pequenos e com responsabilidades bem definidas.
-- Preferir composição de componentes em vez de componentes excessivamente configuráveis.
-- Utilizar `children` quando a composição for mais adequada do que criar props específicas para conteúdo.
-- Evitar componentes excessivamente genéricos ou abstrações prematuras.
-- Não criar componentes apenas para encapsular lógica ou markup que não possua reutilização ou responsabilidade própria.
-- Respeitar a arquitetura e os padrões já existentes no projeto.
-- Antes de criar um novo componente, verificar se já existe um componente que possa ser reutilizado.
-
-## Custom Hooks
-
-- **Priorizar o uso de custom hooks para encapsular lógica reutilizável ou complexa.**
-- Quando uma lógica de componente envolver estado, efeitos, subscriptions, eventos, processamento de dados ou outras regras que possam ser isoladas, avaliar primeiro a criação de um custom hook.
-- Custom hooks devem seguir obrigatoriamente o padrão `useNomeDoHook`.
-- Custom hooks devem encapsular lógica, e não markup ou apresentação.
-- Componentes devem permanecer focados na apresentação e composição da interface sempre que possível.
-- Evitar colocar lógica de negócio complexa diretamente dentro do componente.
-- Quando a mesma lógica aparecer em mais de um componente, extrair essa lógica para um custom hook ou função reutilizável.
-- Mesmo quando a lógica for utilizada por apenas um componente, considerar um custom hook quando isso melhorar significativamente a legibilidade, organização ou testabilidade.
-- Não criar custom hooks desnecessários para lógica trivial que possa permanecer claramente dentro do componente.
-- Custom hooks não devem retornar JSX.
-- Não utilizar hooks condicionalmente.
-- Não utilizar hooks dentro de loops ou funções aninhadas.
-
-## Estado e efeitos
-
-- Evitar `useEffect` quando a lógica puder ser resolvida durante a renderização, por eventos ou por outras abstrações apropriadas.
-- Não utilizar `useEffect` para derivar estado a partir de outro estado ou de props.
-- Evitar estado local quando o valor puder ser derivado diretamente das props ou de outras fontes de estado.
-- Preferir estado derivado em vez de duplicar dados no estado.
-- Não adicionar `useMemo`, `useCallback` ou `React.memo` sem uma justificativa real de performance.
-- Evitar otimizações prematuras.
-
-## Hooks
-
-- Utilizar hooks do React quando necessário.
-- Hooks devem seguir as Rules of Hooks.
-- Não chamar hooks condicionalmente.
-- Não chamar hooks dentro de loops ou funções aninhadas.
-- Preferir custom hooks quando houver necessidade de reutilizar ou organizar lógica relacionada a hooks.
-
-## Listas
-
-- Utilizar `key` estável ao renderizar listas.
-- Não utilizar o índice do array como `key` quando existir um identificador estável.
-
-## Acessibilidade
-
-- Priorizar acessibilidade nos componentes interativos.
-- Elementos semanticamente interativos devem utilizar elementos HTML apropriados (`button`, `a`, `input`, etc.) em vez de elementos genéricos com handlers.
-- Não remover indicadores de foco sem fornecer uma alternativa acessível.
-
-## Arquitetura
-
-- Componentes não devem conter lógica de negócio complexa.
-- Separar lógica de domínio da camada de apresentação quando necessário.
-- Evitar prop drilling excessivo.
-- Quando houver necessidade real de compartilhamento de estado, avaliar Context ou a solução de gerenciamento de estado utilizada pelo projeto.
-- Não introduzir bibliotecas ou padrões adicionais sem necessidade.
-- Antes de criar uma nova abstração, verificar se uma solução existente no projeto pode ser reutilizada.
-- Evitar duplicação de lógica entre componentes.
-- Preferir funções e custom hooks bem definidos em vez de duplicar lógica.
-
-## Exportações
-
-- **Componentes React devem utilizar exclusivamente named exports.**
-- Preferir:
+Exemplo correto:
 
 ```tsx
 export function VideoEditor() {
@@ -88,7 +23,7 @@ export function VideoEditor() {
 }
 ```
 
-ou:
+Não utilizar:
 
 ```tsx
 export const VideoEditor = () => {
@@ -96,11 +31,476 @@ export const VideoEditor = () => {
 }
 ```
 
-- Não utilizar:
+Nem:
 
 ```tsx
+export default function VideoEditor() {
+  return (...)
+}
+```
+
+---
+
+# Componentes
+
+- Manter componentes pequenos e com responsabilidades bem definidas.
+- Componentes devem ser responsáveis principalmente por:
+
+  - composição da interface;
+  - apresentação;
+  - interação do usuário;
+  - integração com hooks.
+
+- Evitar colocar lógica de negócio complexa diretamente dentro dos componentes.
+- Preferir composição de componentes em vez de componentes excessivamente configuráveis.
+- Utilizar `children` quando a composição for mais adequada do que criar props específicas para conteúdo.
+- Evitar componentes excessivamente genéricos ou abstrações prematuras.
+- Não criar componentes apenas para encapsular markup sem responsabilidade ou reutilização real.
+- Antes de criar um novo componente, verificar se já existe um componente reutilizável.
+- Respeitar a arquitetura e os padrões existentes no projeto.
+
+---
+
+# Custom Hooks
+
+- **Priorizar custom hooks para encapsular lógica de componentes.**
+- Custom hooks devem ser utilizados para organizar e encapsular:
+
+  - estado local complexo;
+  - efeitos;
+  - subscriptions;
+  - event listeners;
+  - interação com APIs;
+  - processamento de dados;
+  - regras de negócio relacionadas à interface;
+  - integração com Zustand;
+  - integração com Context;
+  - comportamentos reutilizáveis.
+
+- Custom hooks devem seguir obrigatoriamente o padrão `useNomeDoHook`.
+- Custom hooks devem encapsular lógica, nunca markup ou apresentação.
+- Custom hooks **não devem retornar JSX**.
+- Componentes devem permanecer focados na apresentação e composição da interface sempre que possível.
+- Quando uma lógica puder ser isolada de forma clara em um hook, preferir essa abordagem em vez de manter a lógica diretamente no componente.
+- Quando a mesma lógica aparecer em mais de um componente, avaliar obrigatoriamente sua extração para um custom hook ou função reutilizável.
+- Mesmo quando utilizado por apenas um componente, um custom hook pode ser criado quando isso melhorar significativamente:
+
+  - legibilidade;
+  - organização;
+  - separação de responsabilidades;
+  - testabilidade.
+
+- Não criar custom hooks para lógica trivial que fique mais clara diretamente no componente.
+- Não criar hooks apenas para mover algumas linhas de código sem benefício arquitetural real.
+- Hooks devem respeitar estritamente as Rules of Hooks.
+- Nunca chamar hooks condicionalmente.
+- Nunca chamar hooks dentro de loops.
+- Nunca chamar hooks dentro de funções aninhadas.
+
+Exemplo:
+
+```tsx
+export function VideoEditor() {
+  const editor = useVideoEditor()
+
+  return <EditorLayout>...</EditorLayout>
+}
+```
+
+A lógica relacionada ao editor deve estar em `useVideoEditor`, e não espalhada pelo componente.
+
+---
+
+# Estado local
+
+- Preferir estado local (`useState`, `useReducer`) quando o estado pertence exclusivamente a um componente ou a uma pequena árvore de componentes.
+- Não transformar todo estado em estado global.
+- Evitar estado local quando o valor puder ser derivado diretamente de props, estado global ou outras fontes.
+- Preferir estado derivado em vez de duplicar informações.
+- Não armazenar no estado valores que possam ser calculados durante a renderização.
+- Utilizar `useReducer` quando houver múltiplas transições ou regras relacionadas de estado que tornem vários `useState` difíceis de manter.
+
+---
+
+# Zustand
+
+- **Utilizar Zustand para gerenciamento de estado global quando o estado precisar ser compartilhado entre partes não relacionadas da árvore de componentes.**
+- Não utilizar Context como substituto automático para Zustand.
+- Não utilizar Zustand para estados puramente locais de um componente.
+- Stores devem representar estados e comportamentos de um domínio ou feature.
+- Evitar criar uma store global única contendo todo o estado da aplicação.
+- Preferir stores separadas por domínio quando isso melhorar a organização.
+- Manter regras de negócio e transições de estado relacionadas à store sempre que apropriado.
+- Componentes devem consumir apenas os dados e ações necessários da store.
+- **Selecionar apenas os valores necessários da store**, evitando subscriptions desnecessárias ao estado inteiro.
+
+Preferir:
+
+```tsx
+const currentTime = useEditorStore((state) => state.currentTime)
+const setCurrentTime = useEditorStore((state) => state.setCurrentTime)
+```
+
+Em vez de:
+
+```tsx
+const store = useEditorStore()
+```
+
+quando apenas uma pequena parte da store for necessária.
+
+- Evitar duplicar no estado local informações que já pertencem à store.
+- Não criar uma store Zustand apenas para evitar passar uma única prop.
+- Avaliar primeiro a propriedade do estado:
+
+  - estado local → `useState` / `useReducer`;
+  - estado compartilhado por uma subárvore → Context, quando apropriado;
+  - estado global da aplicação ou domínio → Zustand.
+
+---
+
+# Context
+
+- **Saber utilizar React Context quando houver necessidade real de compartilhar dados ou dependências através de uma árvore de componentes.**
+- Context é apropriado principalmente para informações que pertencem naturalmente a uma determinada árvore de componentes.
+- Exemplos de casos apropriados:
+
+  - configuração de uma feature;
+  - dependências compartilhadas;
+  - estado de uma subárvore;
+  - informações de ambiente;
+  - valores que precisam ser acessados por muitos componentes profundamente aninhados.
+
+- Não utilizar Context automaticamente para qualquer estado compartilhado.
+- Não criar um Context global apenas para evitar prop drilling simples.
+- Quando o estado tiver comportamento complexo, alta frequência de atualização ou necessidade de acesso global pela aplicação, avaliar Zustand antes de criar Context.
+- Evitar Contexts excessivamente grandes.
+- Preferir Contexts focados em uma responsabilidade específica.
+- Providers devem possuir responsabilidade clara.
+- Quando a lógica do Provider ficar complexa, extraí-la para um custom hook.
+- Criar hooks de acesso ao Context quando isso melhorar a API e garantir uso correto.
+
+Exemplo:
+
+```tsx
+export function useEditorContext() {
+  const context = useContext(EditorContext)
+
+  if (!context) {
+    throw new Error('useEditorContext must be used within EditorProvider')
+  }
+
+  return context
+}
+```
+
+O componente deve consumir o hook em vez de acessar diretamente a implementação interna do Context quando essa abstração fizer sentido.
+
+---
+
+# Escolha do gerenciamento de estado
+
+Antes de escolher uma solução de estado, avaliar a propriedade e o escopo do estado.
+
+### Estado local
+
+Utilizar:
+
+```text
+useState
+useReducer
+```
+
+Quando o estado pertence a um componente ou a uma pequena árvore.
+
+### Context
+
+Utilizar:
+
+```text
+React Context
+```
+
+Quando o estado ou dependência pertence naturalmente a uma árvore específica de componentes e precisa atravessar vários níveis.
+
+### Zustand
+
+Utilizar:
+
+```text
+Zustand
+```
+
+Quando o estado representa um domínio ou estado compartilhado pela aplicação e precisa ser acessado por componentes em diferentes partes da árvore.
+
+### Regra geral
+
+Não escolher a solução por conveniência.
+
+Perguntar:
+
+1. Quem é o dono desse estado?
+2. Qual é o escopo desse estado?
+3. Quem precisa acessá-lo?
+4. Com que frequência ele muda?
+5. Existe necessidade real de compartilhamento?
+6. O estado pode ser derivado em vez de armazenado?
+
+---
+
+# Estado e efeitos
+
+- Evitar `useEffect` quando a lógica puder ser resolvida:
+
+  - durante a renderização;
+  - por eventos;
+  - através de um custom hook apropriado;
+  - através de estado derivado.
+
+- **Não utilizar `useEffect` para derivar estado a partir de props ou de outro estado.**
+- Evitar efeitos utilizados apenas para sincronizar estados que poderiam ser derivados.
+- Utilizar `useEffect` principalmente para sincronizar o React com sistemas externos, como:
+
+  - APIs;
+  - subscriptions;
+  - event listeners;
+  - timers;
+  - APIs do navegador;
+  - bibliotecas externas;
+  - recursos fora do ciclo de renderização do React.
+
+- Sempre considerar se o efeito realmente é necessário antes de adicioná-lo.
+
+---
+
+# Hooks
+
+- Utilizar hooks do React quando necessário.
+- Hooks devem seguir as Rules of Hooks.
+- Nunca chamar hooks condicionalmente.
+- Nunca chamar hooks dentro de loops.
+- Nunca chamar hooks dentro de funções aninhadas.
+- Preferir custom hooks para organizar lógica complexa relacionada a hooks.
+- Não criar hooks artificiais apenas para satisfazer uma regra de arquitetura.
+
+---
+
+# useMemo, useCallback e memo
+
+- Não utilizar `useMemo`, `useCallback` ou `React.memo` por padrão.
+- Utilizar essas otimizações somente quando houver uma justificativa real.
+- Antes de adicionar uma otimização, verificar se existe um problema concreto de performance.
+- Não utilizar memoização simplesmente porque um valor ou função é criado durante a renderização.
+- Priorizar código simples e legível.
+- Evitar otimizações prematuras.
+
+---
+
+# Funções
+
+- **Componentes devem utilizar `export function`.**
+- Arrow functions devem ser utilizadas apenas para funções pequenas, objetivas e locais quando sua utilização melhorar a legibilidade.
+- Exemplos apropriados de arrow functions:
+
+  - callbacks de eventos;
+  - callbacks de `.map()`, `.filter()`, `.reduce()`;
+  - pequenas funções auxiliares locais;
+  - callbacks passados para hooks.
+
+- Evitar arrow functions para declarar componentes.
+- Evitar funções inline excessivamente complexas dentro do JSX.
+- Quando uma função crescer ou possuir lógica própria, extraí-la para uma função nomeada ou custom hook, conforme sua responsabilidade.
+
+Exemplo:
+
+```tsx
+export function VideoList() {
+  const handleSelect = (videoId: string) => {
+    ...
+  }
+
+  return (
+    <>
+      {videos.map((video) => (
+        <VideoItem
+          key={video.id}
+          onSelect={() => handleSelect(video.id)}
+        />
+      ))}
+    </>
+  )
+}
+```
+
+---
+
+# Listas
+
+- Utilizar `key` estável ao renderizar listas.
+- Não utilizar o índice do array como `key` quando existir um identificador estável.
+- Preferir IDs persistentes e semanticamente relacionados ao item.
+
+---
+
+# Acessibilidade
+
+- Priorizar acessibilidade em todos os componentes interativos.
+- Utilizar elementos HTML semanticamente apropriados:
+
+  - `button`;
+  - `a`;
+  - `input`;
+  - `select`;
+  - `textarea`;
+  - etc.
+
+- Não utilizar elementos genéricos como `div` ou `span` para substituir elementos interativos nativos sem necessidade.
+- Não remover indicadores de foco sem fornecer uma alternativa acessível.
+- Garantir labels e nomes acessíveis para controles.
+- Utilizar atributos ARIA somente quando a semântica HTML nativa não for suficiente.
+
+---
+
+# Arquitetura
+
+- Componentes não devem conter lógica de negócio complexa.
+- Separar lógica de domínio da camada de apresentação quando necessário.
+- Preferir a seguinte separação de responsabilidades:
+
+```text
+Component
+    ↓
+Custom Hook
+    ↓
+Store / Context / Service
+    ↓
+Domain / API / External System
+```
+
+- Essa estrutura não deve ser aplicada mecanicamente.
+- Não criar camadas ou abstrações sem necessidade.
+- Evitar prop drilling excessivo.
+- Quando houver necessidade real de compartilhamento de estado, avaliar:
+
+  - estado local;
+  - Context;
+  - Zustand.
+
+- Não introduzir bibliotecas ou padrões adicionais sem necessidade.
+- Antes de criar uma nova abstração, verificar se uma solução existente no projeto pode ser reutilizada.
+- Evitar duplicação de lógica entre componentes.
+- Preferir funções e custom hooks bem definidos em vez de duplicar lógica.
+- Manter cada módulo com uma responsabilidade clara.
+- Evitar componentes "Deus" que concentrem estado, lógica de negócio, efeitos e apresentação de toda uma feature.
+
+---
+
+# Separação entre lógica e apresentação
+
+Sempre que um componente começar a acumular lógica significativa, avaliar a seguinte divisão:
+
+```tsx
+export function VideoEditor() {
+  const editor = useVideoEditor()
+
+  return <EditorLayout>...</EditorLayout>
+}
+```
+
+O componente deve cuidar principalmente da interface.
+
+O hook deve cuidar da lógica de interação:
+
+```tsx
+export function useVideoEditor() {
+  // estado
+  // eventos
+  // efeitos
+  // regras da feature
+  // integração com store/context
+}
+```
+
+A store deve cuidar do estado global quando necessário:
+
+```tsx
+export const useEditorStore = create(...)
+```
+
+Services/utilitários devem cuidar de operações externas ou lógica independente da UI.
+
+---
+
+# Exportações
+
+- **Todos os componentes React devem utilizar exclusivamente named exports.**
+- **Componentes devem ser declarados utilizando `export function`.**
+- Não utilizar `export default` para componentes React.
+- Não utilizar `export const Component = () => ...` para componentes React.
+- Manter o padrão de named exports consistente em todo o projeto.
+
+Preferir:
+
+```tsx
+export function VideoEditor() {
+  return (...)
+}
+```
+
+Não utilizar:
+
+```tsx
+export const VideoEditor = () => {
+  return (...)
+}
+```
+
+Nem:
+
+```tsx
+function VideoEditor() {
+  return (...)
+}
+
 export default VideoEditor
 ```
 
-- Não utilizar `export default` para componentes React mesmo que o framework ou ferramenta permita.
-- Manter o padrão de named exports consistente em todo o projeto.
+---
+
+# Regra de decisão
+
+Ao implementar uma nova feature React, seguir esta ordem de avaliação:
+
+1. **O valor pode ser derivado?**
+
+   - Se sim, não criar estado desnecessário.
+
+2. **O estado pertence somente ao componente?**
+
+   - Usar `useState` ou `useReducer`.
+
+3. **A lógica do componente está ficando complexa?**
+
+   - Avaliar a criação de um custom hook.
+
+4. **O estado precisa atravessar profundamente uma árvore específica?**
+
+   - Avaliar Context.
+
+5. **O estado pertence a um domínio ou precisa ser acessado em diferentes partes da aplicação?**
+
+   - Avaliar Zustand.
+
+6. **Existe uma integração externa?**
+
+   - Isolar a integração em hook, service ou outra camada apropriada.
+
+7. **Existe um componente reutilizável existente?**
+
+   - Reutilizá-lo antes de criar outro.
+
+8. **Existe uma abstração nova sendo criada?**
+
+   - Verificar se ela resolve um problema real antes de introduzi-la.
+
+O objetivo é manter componentes simples, previsíveis e focados em UI, enquanto estado, efeitos, regras de negócio e integrações permanecem nas camadas apropriadas.

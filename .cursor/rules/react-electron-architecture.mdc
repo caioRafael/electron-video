@@ -1,0 +1,823 @@
+---
+description: Arquitetura para aplicações desktop com Electron, React, TypeScript e Electron Vite
+alwaysApply: true
+---
+
+---
+
+# Arquitetura da aplicação
+
+A aplicação utiliza:
+
+- Electron
+- Electron Vite
+- React
+- TypeScript
+- Zustand
+- Tailwind CSS
+- shadcn/ui
+
+A aplicação deve respeitar a separação de responsabilidades entre:
+
+```text
+Electron Main Process
+        ↓
+     Preload
+        ↓
+React Renderer
+```
+
+O React Renderer é responsável pela interface e interação do usuário.
+
+O Electron Main Process é responsável pelas funcionalidades nativas da aplicação desktop.
+
+O Preload é responsável por expor de forma segura e controlada funcionalidades do Electron para o Renderer.
+
+---
+
+# Estrutura principal
+
+A estrutura deve seguir, como base:
+
+```text
+src/
+├── main/
+│   ├── index.ts
+│   ├── ...
+│
+├── preload/
+│   ├── index.ts
+│   ├── ...
+│
+└── renderer/
+    ├── components/
+    ├── hooks/
+    ├── stores/
+    ├── services/
+    ├── lib/
+    ├── types/
+    ├── App.tsx
+    └── main.tsx
+```
+
+Quando o projeto utilizar uma configuração em que o código React esteja diretamente dentro de `src`, manter a mesma separação conceitual.
+
+A arquitetura deve sempre deixar claro o que pertence ao:
+
+- Electron Main;
+- Preload;
+- React Renderer.
+
+---
+
+# Electron Main Process
+
+O Main Process deve conter somente código relacionado ao funcionamento nativo da aplicação Electron.
+
+Responsabilidades típicas:
+
+- criação e gerenciamento de `BrowserWindow`;
+- menus;
+- lifecycle do Electron;
+- filesystem;
+- dialogs;
+- processos do sistema;
+- execução de processos externos;
+- comunicação IPC;
+- integração com APIs nativas do sistema operacional;
+- gerenciamento de janelas;
+- funcionalidades que não devem ser executadas no Renderer.
+
+Não colocar componentes React no Main Process.
+
+Não importar código específico da UI React no Main Process.
+
+Não acessar APIs do Electron diretamente dentro dos componentes React.
+
+---
+
+# Preload
+
+O Preload funciona como uma camada de segurança entre o Renderer e o Electron Main Process.
+
+O Preload deve:
+
+- utilizar `contextBridge`;
+- expor somente APIs explicitamente necessárias;
+- fornecer uma API tipada para o Renderer;
+- encapsular comunicação IPC;
+- evitar expor diretamente objetos ou APIs completas do Electron.
+
+Preferir:
+
+```text
+React
+  ↓
+window.api
+  ↓
+Preload
+  ↓
+IPC
+  ↓
+Main Process
+```
+
+Evitar:
+
+```text
+React
+  ↓
+Electron API diretamente
+```
+
+Não utilizar `nodeIntegration` para permitir que o Renderer acesse Node.js diretamente.
+
+---
+
+# React Renderer
+
+O Renderer contém toda a interface da aplicação.
+
+A arquitetura do React deve priorizar:
+
+```text
+UI
+↓
+Shared
+↓
+Features
+```
+
+A pasta principal para componentes deve ser:
+
+```text
+src/components/
+```
+
+Sua organização deve seguir:
+
+```text
+components/
+├── ui/
+├── shared/
+└── features/
+```
+
+---
+
+# UI Components
+
+A pasta:
+
+```text
+/components/ui
+```
+
+contém os componentes básicos e primitivos da interface.
+
+Esses componentes normalmente vêm de:
+
+- shadcn/ui;
+- Radix UI;
+- componentes HTML estilizados;
+- componentes básicos de interface criados especificamente para o projeto.
+
+Exemplos:
+
+```text
+components/
+└── ui/
+    ├── button.tsx
+    ├── input.tsx
+    ├── dialog.tsx
+    ├── dropdown-menu.tsx
+    ├── tooltip.tsx
+    └── ...
+```
+
+Os componentes de `ui` devem ser:
+
+- pequenos;
+- genéricos;
+- reutilizáveis;
+- independentes de uma feature específica;
+- focados exclusivamente na apresentação e interação básica.
+
+Um componente `ui` não deve conhecer regras de negócio da aplicação.
+
+Não colocar lógica específica de uma feature em `ui`.
+
+Não importar componentes de `features` dentro de `ui`.
+
+Não importar componentes `shared` dentro de `ui`.
+
+A direção das dependências deve ser:
+
+```text
+ui
+↑
+shared
+↑
+features
+```
+
+---
+
+# Shared Components
+
+A pasta:
+
+```text
+/components/shared
+```
+
+contém componentes construídos a partir dos componentes de `ui`.
+
+Esses componentes representam padrões de interface reutilizáveis em diferentes partes da aplicação.
+
+Exemplos:
+
+```text
+components/
+└── shared/
+    ├── app-header/
+    ├── empty-state/
+    ├── loading-state/
+    ├── confirmation-dialog/
+    ├── file-picker/
+    ├── media-preview/
+    └── ...
+```
+
+Um componente `shared` pode combinar diversos componentes `ui`.
+
+Exemplo:
+
+```text
+ConfirmationDialog
+    ↓
+Dialog
+├── DialogContent
+├── DialogHeader
+├── DialogTitle
+├── DialogDescription
+└── Button
+```
+
+O objetivo do `shared` é evitar que o mesmo padrão de interface seja reconstruído em diferentes features.
+
+Um componente `shared` deve ser reutilizável por mais de uma feature ou possuir uma responsabilidade claramente transversal à aplicação.
+
+Não colocar regras específicas de uma feature em `shared`.
+
+Não criar componentes `shared` apenas para remover algumas linhas de JSX.
+
+Não utilizar `shared` como depósito genérico de componentes.
+
+Não permitir que `shared` dependa de `features`.
+
+A direção das dependências deve ser:
+
+```text
+ui
+ ↓
+shared
+```
+
+Nunca:
+
+```text
+shared
+ ↓
+features
+```
+
+---
+
+# Feature Components
+
+As features devem obrigatoriamente estar dentro de:
+
+```text
+/components/features/[feature]
+```
+
+Exemplo:
+
+```text
+components/
+└── features/
+    ├── editor/
+    ├── timeline/
+    ├── media-library/
+    ├── export/
+    └── settings/
+```
+
+Cada feature representa uma área funcional da aplicação.
+
+Exemplo:
+
+```text
+components/features/editor/
+├── Editor.tsx
+├── EditorToolbar.tsx
+├── EditorCanvas.tsx
+├── EditorSidebar.tsx
+└── ...
+```
+
+Features são compostas principalmente por:
+
+```text
+Feature
+  ↓
+Shared
+  ↓
+UI
+```
+
+Uma feature pode utilizar:
+
+- componentes `ui`;
+- componentes `shared`;
+- custom hooks;
+- Zustand stores;
+- services;
+- tipos;
+- utilitários.
+
+Uma feature não deve colocar componentes genéricos em seu próprio diretório quando eles possuem reutilização real em outras features.
+
+Nesse caso, avaliar mover o componente para `shared`.
+
+---
+
+# Hierarquia dos componentes
+
+A hierarquia deve ser respeitada:
+
+```text
+UI
+│
+├── componentes básicos
+│
+↓
+Shared
+│
+├── padrões reutilizáveis
+│
+↓
+Features
+│
+└── interface específica de uma funcionalidade
+```
+
+Exemplo:
+
+```text
+Button
+  ↓
+ConfirmationDialog
+  ↓
+DeleteProjectDialog
+```
+
+Onde:
+
+- `Button` → `ui`;
+- `ConfirmationDialog` → `shared`;
+- `DeleteProjectDialog` → `features/projects`.
+
+---
+
+# Regra de dependência
+
+As dependências entre componentes devem seguir uma direção única.
+
+Permitido:
+
+```text
+features → shared → ui
+```
+
+Permitido:
+
+```text
+features → ui
+```
+
+Permitido:
+
+```text
+features → hooks
+features → stores
+features → services
+```
+
+Evitar:
+
+```text
+ui → shared
+ui → features
+shared → features
+```
+
+Evitar dependências circulares.
+
+Uma feature não deve ser necessária para que um componente `shared` ou `ui` funcione.
+
+---
+
+# Organização interna das Features
+
+Uma feature pode conter sua própria organização quando necessário.
+
+Exemplo:
+
+```text
+components/
+└── features/
+    └── editor/
+        ├── components/
+        ├── hooks/
+        ├── stores/
+        ├── services/
+        ├── types/
+        └── index.ts
+```
+
+Não criar essa estrutura automaticamente.
+
+Começar simples.
+
+Adicionar subdiretórios somente quando a complexidade da feature justificar.
+
+Para features pequenas:
+
+```text
+components/features/editor/
+├── Editor.tsx
+├── EditorToolbar.tsx
+└── EditorCanvas.tsx
+```
+
+Para features complexas:
+
+```text
+components/features/editor/
+├── components/
+├── hooks/
+├── stores/
+├── services/
+└── types/
+```
+
+---
+
+# Custom Hooks
+
+A lógica de interface deve ser extraída para custom hooks quando houver complexidade suficiente.
+
+Exemplo:
+
+```text
+components/features/editor/
+├── Editor.tsx
+└── hooks/
+    └── useEditor.ts
+```
+
+O componente deve preferencialmente realizar:
+
+```text
+renderização
++
+composição
++
+delegação de eventos
+```
+
+Enquanto o hook pode cuidar de:
+
+```text
+estado
++
+eventos
++
+efeitos
++
+regras de interação
++
+integração com stores
+```
+
+Não colocar lógica de negócio complexa diretamente no JSX.
+
+Não criar hooks artificiais para lógica trivial.
+
+---
+
+# Zustand
+
+Zustand deve ser utilizado para estado global ou estado compartilhado entre partes independentes da aplicação.
+
+Exemplos de estados que podem justificar Zustand:
+
+- estado do editor;
+- projeto atualmente aberto;
+- timeline;
+- seleção atual;
+- preferências da aplicação;
+- estado compartilhado entre diferentes features.
+
+Organizar stores por domínio.
+
+Exemplo:
+
+```text
+stores/
+├── editor.store.ts
+├── project.store.ts
+├── timeline.store.ts
+└── settings.store.ts
+```
+
+Evitar uma store única para toda a aplicação.
+
+Preferir seletores específicos:
+
+```tsx
+const currentTime = useEditorStore((state) => state.currentTime)
+```
+
+em vez de consumir a store inteira quando isso não for necessário.
+
+Não utilizar Zustand para estado puramente local.
+
+---
+
+# Context
+
+Context deve ser utilizado quando o estado ou dependência pertence naturalmente a uma árvore específica de componentes.
+
+Exemplos:
+
+- configuração de uma feature;
+- estado de um Provider;
+- dependências compartilhadas dentro de uma subárvore;
+- configuração de componentes profundamente aninhados.
+
+Não utilizar Context automaticamente como solução de estado global.
+
+Quando o estado for realmente global ou pertencer a um domínio compartilhado pela aplicação, preferir Zustand.
+
+Quando Context for utilizado, considerar criar um custom hook para encapsular seu consumo.
+
+Exemplo:
+
+```text
+EditorProvider
+    ↓
+useEditorContext()
+    ↓
+Editor components
+```
+
+---
+
+# Services
+
+Services devem encapsular comunicação com sistemas externos.
+
+Exemplos:
+
+```text
+services/
+├── project.service.ts
+├── media.service.ts
+├── render.service.ts
+└── filesystem.service.ts
+```
+
+Services podem encapsular:
+
+- IPC;
+- APIs externas;
+- filesystem;
+- comunicação com processos;
+- integração com o Patchwork;
+- operações assíncronas;
+- lógica de infraestrutura.
+
+Componentes React não devem implementar diretamente essas integrações.
+
+Preferir:
+
+```text
+Component
+    ↓
+Custom Hook
+    ↓
+Service
+    ↓
+Preload
+    ↓
+IPC
+    ↓
+Main Process
+```
+
+---
+
+# Comunicação com Electron
+
+A comunicação entre React e Electron deve seguir:
+
+```text
+React Component
+       ↓
+Custom Hook
+       ↓
+Service
+       ↓
+window.api
+       ↓
+Preload
+       ↓
+IPC
+       ↓
+Main Process
+```
+
+Evitar chamadas IPC diretamente dentro de componentes quando uma camada de service ou hook tornar a arquitetura mais clara.
+
+Não importar `electron` dentro do Renderer.
+
+Não utilizar APIs Node.js diretamente dentro do Renderer.
+
+Não expor APIs desnecessárias através do `contextBridge`.
+
+---
+
+# Tipos
+
+Utilizar TypeScript para definir contratos entre as camadas.
+
+Especialmente para:
+
+- IPC;
+- APIs do preload;
+- stores;
+- services;
+- props;
+- domínio;
+- dados recebidos do Main Process.
+
+Os contratos do Preload devem ser tipados.
+
+Evitar `any`.
+
+Preferir tipos explícitos e interfaces quando apropriado.
+
+---
+
+# Componentes React
+
+Todos os componentes React devem utilizar:
+
+```tsx
+export function ComponentName() {
+  return (...)
+}
+```
+
+Não utilizar:
+
+```tsx
+export const ComponentName = () => {
+  return (...)
+}
+```
+
+Não utilizar:
+
+```tsx
+export default ComponentName
+```
+
+Componentes devem sempre utilizar **named exports**.
+
+Arrow functions devem ser reservadas para:
+
+- callbacks;
+- funções pequenas;
+- transformações;
+- `.map()`;
+- `.filter()`;
+- `.reduce()`;
+- handlers simples;
+- funções locais objetivas.
+
+---
+
+# Barrel Exports
+
+Utilizar `index.ts` para organizar exports quando isso melhorar a API de um módulo ou feature.
+
+Exemplo:
+
+```text
+features/editor/
+├── Editor.tsx
+├── EditorToolbar.tsx
+├── EditorCanvas.tsx
+└── index.ts
+```
+
+```tsx
+export { Editor } from './Editor'
+export { EditorToolbar } from './EditorToolbar'
+export { EditorCanvas } from './EditorCanvas'
+```
+
+Não criar barrel files indiscriminadamente.
+
+Evitar barrels que gerem dependências circulares ou dificultem o tree-shaking.
+
+---
+
+# Regras para criação de componentes
+
+Antes de criar um componente, verificar:
+
+1. Já existe um componente `ui` adequado?
+2. Já existe um componente `shared` adequado?
+3. O componente pertence claramente a uma feature?
+4. O componente será reutilizado em diferentes features?
+5. A lógica deveria estar em um custom hook?
+6. O estado deveria ser local, Context ou Zustand?
+7. O componente está assumindo responsabilidades demais?
+
+Classificar o componente corretamente antes de criá-lo.
+
+---
+
+# Regra de decisão
+
+Ao implementar uma nova funcionalidade:
+
+```text
+1. É um primitivo de UI?
+       ↓
+      UI
+
+2. É um padrão reutilizável?
+       ↓
+    Shared
+
+3. É específico de uma funcionalidade?
+       ↓
+    Feature
+
+4. Possui lógica complexa?
+       ↓
+  Custom Hook
+
+5. Precisa de estado compartilhado globalmente?
+       ↓
+    Zustand
+
+6. Pertence a uma árvore específica?
+       ↓
+    Context
+
+7. Precisa acessar recursos externos?
+       ↓
+    Service
+
+8. Precisa acessar APIs nativas do Electron?
+       ↓
+Preload → IPC → Main
+```
+
+---
+
+# Princípios fundamentais
+
+- **UI não conhece domínio.**
+- **Shared não conhece features.**
+- **Features podem consumir Shared e UI.**
+- **Componentes não devem concentrar lógica de negócio.**
+- **Custom hooks encapsulam lógica de interface.**
+- **Zustand gerencia estado compartilhado/global.**
+- **Context é utilizado para escopos específicos de uma árvore de componentes.**
+- **Services encapsulam integrações externas.**
+- **Preload é a fronteira segura entre React e Electron.**
+- **Main Process concentra funcionalidades nativas.**
+- **Componentes React sempre utilizam named exports.**
+- **Componentes React sempre utilizam `export function`.**
+- **Arrow functions não devem ser utilizadas para declarar componentes.**
+- **Não criar abstrações antes de existir uma necessidade real.**
+- **Não duplicar componentes ou lógica quando uma abstração existente puder ser reutilizada.**
+- **Priorizar simplicidade, coesão e separação clara de responsabilidades.**

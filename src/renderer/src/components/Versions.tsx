@@ -3,7 +3,8 @@ export function Versions(): React.JSX.Element {
 
   return (
     <p className="text-muted-foreground">
-      Electron {versions.electron} · Chromium {versions.chrome} · Node {versions.node}
+      Electron {versions.electron} · Chromium {versions.chrome} · Node{' '}
+      {versions.node}
     </p>
   )
 }
