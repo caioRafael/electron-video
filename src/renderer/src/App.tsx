@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { WorkspaceAssetDropOverlay } from './components/feature/workspace/WorkspaceAssetDropOverlay'
 import { WorkspaceModal } from './components/feature/workspace/WorkspaceModal'
 import { WorkspaceSidebar } from './components/feature/workspace/WorkspaceSidebar'
 import { AppLayout } from './components/shared/app-layout'
@@ -17,16 +18,19 @@ export function App() {
   }, [])
 
   return (
-    <AppLayout
-      left={
-        <>
-          <WorkspaceModal open={!currentWorkspace} />
-          <WorkspaceSidebar />
-        </>
-      }
-      top="top middle panel - video player"
-      bottom="bottom middle panel - time line"
-      right="right panel - timeline editor"
-    />
+    <>
+      <AppLayout
+        left={
+          <>
+            <WorkspaceModal open={!currentWorkspace} />
+            <WorkspaceSidebar />
+          </>
+        }
+        top="top middle panel - video player"
+        bottom="bottom middle panel - time line"
+        right="right panel - timeline editor"
+      />
+      <WorkspaceAssetDropOverlay />
+    </>
   )
 }

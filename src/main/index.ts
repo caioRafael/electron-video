@@ -2,6 +2,14 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { AssetKind } from '../shared/assets'
+import {
+  getAssetPreview,
+  importWorkspaceAssetPaths,
+  importWorkspaceAssets,
+  listWorkspaceAssets,
+  renameWorkspaceAsset,
+} from './assets'
 import {
   createWorkspace,
   getDirectoryPath,
@@ -29,6 +37,12 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('file:')) {
+      event.preventDefault()
+    }
   })
 
   if (is.dev && process.env.ELECTRON_RENDERER_URL) {
@@ -61,6 +75,33 @@ app.whenReady().then(() => {
   ipcMain.handle('list-workspace-files', (_event, workspacePath: string) => {
     return listWorkspaceFiles(workspacePath)
   })
+  ipcMain.handle('list-workspace-assets', (_event, workspacePath: string) => {
+    return listWorkspaceAssets(workspacePath)
+  })
+  ipcMain.handle(
+    'import-workspace-assets',
+    (_event, workspacePath: string, kind?: AssetKind) => {
+      return importWorkspaceAssets(workspacePath, kind)
+    },
+  )
+  ipcMain.handle(
+    'import-workspace-asset-paths',
+    (_event, workspacePath: string, filePaths: string[]) => {
+      return importWorkspaceAssetPaths(workspacePath, filePaths)
+    },
+  )
+  ipcMain.handle(
+    'rename-workspace-asset',
+    (_event, workspacePath: string, assetPath: string, nextName: string) => {
+      return renameWorkspaceAsset(workspacePath, assetPath, nextName)
+    },
+  )
+  ipcMain.handle(
+    'get-asset-preview',
+    (_event, workspacePath: string, assetPath: string) => {
+      return getAssetPreview(workspacePath, assetPath)
+    },
+  )
 
   createWindow()
 

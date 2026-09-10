@@ -1,23 +1,16 @@
 import { app, dialog, OpenDialogOptions } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
+import { ensureAssetFolders } from './assets'
+import { pathExists } from './fs'
 
 const WORKSPACE_MARKER = '.video-lab-workspace.json'
 const REGISTRY_FILE = 'workspaces.json'
 
 function getRegistryPath(): string {
   return path.join(app.getPath('userData'), REGISTRY_FILE)
-}
-
-async function pathExists(targetPath: string): Promise<boolean> {
-  try {
-    await access(targetPath)
-    return true
-  } catch {
-    return false
-  }
 }
 
 function isWorkspace(value: unknown): value is Workspace {
@@ -85,6 +78,7 @@ export async function createWorkspace(
   const workspacePath = path.join(parentDirectory, workspaceName)
 
   await mkdir(workspacePath)
+  await ensureAssetFolders(workspacePath)
 
   const workspace: Workspace = {
     id: randomUUID(),
