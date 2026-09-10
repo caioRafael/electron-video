@@ -1,43 +1,32 @@
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import { Versions } from './components/Versions'
+import { useEffect } from 'react'
+import { WorkspaceModal } from './components/feature/workspace/WorkspaceModal'
+import { WorkspaceSidebar } from './components/feature/workspace/WorkspaceSidebar'
+import { AppLayout } from './components/shared/app-layout'
+import { refreshWorkspaces } from './services/workspace/session'
+import { useWorkspaceStore } from './stores/workspace.store'
 
-export function App(): React.JSX.Element {
-  const handlePing = (): void => {
-    window.electron.ipcRenderer.send('ping')
-  }
+export function App() {
+  const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace)
+
+  useEffect(() => {
+    async function loadWorkspaces() {
+      await refreshWorkspaces()
+    }
+
+    loadWorkspaces()
+  }, [])
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-background p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Video Lab Desktop</CardTitle>
-          <CardDescription>
-            shadcn/ui initialized with the Lyra preset, emerald theme, IBM Plex Sans, and Phosphor
-            icons.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Add more components with{' '}
-            <code className="rounded-none bg-muted px-1 py-0.5 font-medium">
-              pnpm dlx shadcn@latest add [component]
-            </code>
-            .
-          </p>
-        </CardContent>
-        <CardFooter className="justify-between gap-2">
-          <Versions />
-          <Button onClick={handlePing}>Send IPC</Button>
-        </CardFooter>
-      </Card>
-    </main>
+    <AppLayout
+      left={
+        <>
+          <WorkspaceModal open={!currentWorkspace} />
+          <WorkspaceSidebar />
+        </>
+      }
+      top="top middle panel - video player"
+      bottom="bottom middle panel - time line"
+      right="right panel - timeline editor"
+    />
   )
 }
