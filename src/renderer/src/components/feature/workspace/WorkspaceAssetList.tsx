@@ -117,7 +117,7 @@ function WorkspaceAssetSection({
         >
           {assets.map((asset) => (
             <WorkspaceAssetItem
-              key={asset.path}
+              key={asset.id}
               asset={asset}
               disabled={isImporting}
               viewMode={viewMode}

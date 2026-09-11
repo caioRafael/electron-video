@@ -4,3 +4,9 @@ out
 .DS_Store
 .eslintcache
 *.log*
+.cache
+resources/ffmpeg/*/ffmpeg
+resources/ffmpeg/*/ffprobe
+resources/ffmpeg/*/*.exe
+resources/ffmpeg/*/manifest.json
+licenses/ffmpeg/vendor

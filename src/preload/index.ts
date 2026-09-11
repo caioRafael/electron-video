@@ -34,20 +34,21 @@ const api = {
         filePaths,
       )
     },
-    renameAsset: (
-      workspacePath: string,
-      assetPath: string,
-      nextName: string,
-    ) => {
+    renameAsset: (workspacePath: string, assetId: string, nextName: string) => {
       return ipcRenderer.invoke(
         'rename-workspace-asset',
         workspacePath,
-        assetPath,
+        assetId,
         nextName,
       )
     },
-    getAssetPreview: (workspacePath: string, assetPath: string) => {
-      return ipcRenderer.invoke('get-asset-preview', workspacePath, assetPath)
+    getAssetPreview: (workspacePath: string, assetId: string) => {
+      return ipcRenderer.invoke('get-asset-preview', workspacePath, assetId)
+    },
+  },
+  media: {
+    getRuntimeInfo: () => {
+      return ipcRenderer.invoke('get-media-runtime-info')
     },
   },
 }

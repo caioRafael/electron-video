@@ -1,0 +1,22 @@
+This software uses FFmpeg and FFprobe as separate bundled programs.
+
+FFmpeg is licensed under the GNU Lesser General Public License (LGPL)
+version 2.1 or later. Some redistributed Windows and Linux builds are
+upgraded to LGPLv3 because they enable `--enable-version3` for
+LGPL-compatible libraries that require it (for example Apache 2.0
+components). Those builds still do not enable `--enable-gpl` or
+`--enable-nonfree`.
+
+Video Lab launches FFmpeg and FFprobe as external processes. It does not
+link against libavcodec, libavformat, or other FFmpeg libraries.
+
+Copyright notices and the full license texts are included in this directory.
+
+FFmpeg source code:
+https://github.com/FFmpeg/FFmpeg
+
+macOS binaries are compiled from the official FFmpeg n8.1 source without
+`--enable-gpl` and without `--enable-nonfree`.
+
+Windows and Linux binaries come from BtbN FFmpeg-Builds, `lgpl` variant:
+https://github.com/BtbN/FFmpeg-Builds

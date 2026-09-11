@@ -10,6 +10,7 @@ import {
   listWorkspaceAssets,
   renameWorkspaceAsset,
 } from './assets'
+import { getMediaRuntimeInfo } from './media/runtime'
 import {
   createWorkspace,
   getDirectoryPath,
@@ -92,16 +93,17 @@ app.whenReady().then(() => {
   )
   ipcMain.handle(
     'rename-workspace-asset',
-    (_event, workspacePath: string, assetPath: string, nextName: string) => {
-      return renameWorkspaceAsset(workspacePath, assetPath, nextName)
+    (_event, workspacePath: string, assetId: string, nextName: string) => {
+      return renameWorkspaceAsset(workspacePath, assetId, nextName)
     },
   )
   ipcMain.handle(
     'get-asset-preview',
-    (_event, workspacePath: string, assetPath: string) => {
-      return getAssetPreview(workspacePath, assetPath)
+    (_event, workspacePath: string, assetId: string) => {
+      return getAssetPreview(workspacePath, assetId)
     },
   )
+  ipcMain.handle('get-media-runtime-info', () => getMediaRuntimeInfo())
 
   createWindow()
 

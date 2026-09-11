@@ -5,8 +5,8 @@ import path from 'node:path'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 import { ensureAssetFolders } from './assets'
 import { pathExists } from './fs'
+import { createWorkspaceMarker, writeWorkspaceMarker } from './workspace-marker'
 
-const WORKSPACE_MARKER = '.video-lab-workspace.json'
 const REGISTRY_FILE = 'workspaces.json'
 
 function getRegistryPath(): string {
@@ -87,10 +87,9 @@ export async function createWorkspace(
     updatedAt: new Date().toISOString(),
   }
 
-  await writeFile(
-    path.join(workspacePath, WORKSPACE_MARKER),
-    JSON.stringify({ id: workspace.id, name: workspace.name }, null, 2),
-    'utf8',
+  await writeWorkspaceMarker(
+    workspacePath,
+    createWorkspaceMarker(workspace.id, workspace.name),
   )
 
   const workspaces = await readRegistry()

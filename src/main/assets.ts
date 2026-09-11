@@ -2,16 +2,32 @@ import { BrowserWindow, dialog, nativeImage, OpenDialogOptions } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { copyFile, mkdir, readdir, rename, stat } from 'node:fs/promises'
 import path from 'node:path'
+import { AssetMetadata } from '../shared/asset-metadata'
 import {
   ASSET_DIRECTORIES,
   ASSETS_DIRECTORY,
   Asset,
   AssetKind,
   EMPTY_WORKSPACE_ASSETS,
+  findAssetById,
+  getAssetSource,
   ImportAssetsResult,
+  isAssetKind,
   WorkspaceAssets,
 } from '../shared/assets'
+import {
+  isInsideDirectory,
+  isWorkspaceAssetFile,
+  resolveAssetSource,
+} from './asset-path'
 import { pathExists } from './fs'
+import { getMediaMetadata } from './media/metadata'
+import {
+  createWorkspaceMarker,
+  readWorkspaceMarker,
+  WorkspaceMarker,
+  writeWorkspaceMarker,
+} from './workspace-marker'
 
 const AUDIO_EXTENSIONS = [
   'mp3',
@@ -58,8 +74,29 @@ const IMAGE_EXTENSION_SET = new Set(IMAGE_EXTENSIONS)
 const PREVIEW_MAX_SIZE = 320
 const previewCache = new Map<string, string | null>()
 
-function isAssetKind(value: unknown): value is AssetKind {
-  return value === 'audio' || value === 'video' || value === 'image'
+interface AssetFile {
+  name: string
+  kind: AssetKind
+  source: string
+}
+
+function createAssetId(): string {
+  return `asset_${randomUUID()}`
+}
+
+function createAsset(
+  file: AssetFile,
+  createdAt = new Date().toISOString(),
+  metadata: AssetMetadata | null = null,
+): Asset {
+  return {
+    id: createAssetId(),
+    name: file.name,
+    kind: file.kind,
+    source: file.source,
+    createdAt,
+    metadata,
+  }
 }
 
 function getExtension(filePath: string): string {
@@ -88,36 +125,103 @@ function getAssetDirectory(workspacePath: string, kind: AssetKind): string {
   return path.join(workspacePath, ASSETS_DIRECTORY, ASSET_DIRECTORIES[kind])
 }
 
-function isInsideDirectory(targetPath: string, directoryPath: string): boolean {
-  const relative = path.relative(
-    path.resolve(directoryPath),
-    path.resolve(targetPath),
-  )
+function haveAssetsChanged(current: Asset[], next: Asset[]): boolean {
+  if (current.length !== next.length) {
+    return true
+  }
 
-  return (
-    relative === '' ||
-    (!relative.startsWith('..') && !path.isAbsolute(relative))
-  )
+  const currentById = new Map(current.map((asset) => [asset.id, asset]))
+
+  return next.some((asset) => {
+    const persisted = currentById.get(asset.id)
+
+    if (!persisted) {
+      return true
+    }
+
+    return (
+      persisted.name !== asset.name ||
+      persisted.kind !== asset.kind ||
+      persisted.source !== asset.source ||
+      persisted.createdAt !== asset.createdAt ||
+      JSON.stringify(persisted.metadata) !== JSON.stringify(asset.metadata)
+    )
+  })
+}
+
+function groupAssetsByKind(assets: Asset[]): WorkspaceAssets {
+  const grouped: WorkspaceAssets = {
+    audio: [],
+    videos: [],
+    images: [],
+  }
+
+  for (const asset of assets) {
+    if (asset.kind === 'audio') {
+      grouped.audio.push(asset)
+      continue
+    }
+
+    if (asset.kind === 'video') {
+      grouped.videos.push(asset)
+      continue
+    }
+
+    grouped.images.push(asset)
+  }
+
+  grouped.audio.sort((left, right) => {
+    return left.name.localeCompare(right.name, 'pt-BR')
+  })
+  grouped.videos.sort((left, right) => {
+    return left.name.localeCompare(right.name, 'pt-BR')
+  })
+  grouped.images.sort((left, right) => {
+    return left.name.localeCompare(right.name, 'pt-BR')
+  })
+
+  return grouped
+}
+
+async function getOrCreateWorkspaceMarker(
+  workspacePath: string,
+): Promise<WorkspaceMarker> {
+  const marker = await readWorkspaceMarker(workspacePath)
+
+  if (marker) {
+    return marker
+  }
+
+  return createWorkspaceMarker(randomUUID(), path.basename(workspacePath))
+}
+
+async function persistWorkspaceAssets(
+  workspacePath: string,
+  assets: Asset[],
+): Promise<void> {
+  const marker = await getOrCreateWorkspaceMarker(workspacePath)
+
+  await writeWorkspaceMarker(workspacePath, {
+    ...marker,
+    assets,
+  })
+}
+
+function findPersistedAsset(
+  persistedBySource: Map<string, Asset>,
+  file: AssetFile,
+): Asset | undefined {
+  const persisted = persistedBySource.get(file.source)
+
+  if (!persisted || persisted.kind !== file.kind) {
+    return undefined
+  }
+
+  return persisted
 }
 
 function hasInvalidAssetNameChars(value: string): boolean {
   return value.includes('\0') || /[\\/:*?"<>|]/.test(value)
-}
-
-function isWorkspaceAssetFile(
-  workspacePath: string,
-  assetPath: string,
-): boolean {
-  const resolvedAssetPath = path.resolve(assetPath)
-
-  return Object.values(ASSET_DIRECTORIES).some((folder) => {
-    const directoryPath = path.resolve(workspacePath, ASSETS_DIRECTORY, folder)
-
-    return (
-      resolvedAssetPath !== directoryPath &&
-      isInsideDirectory(resolvedAssetPath, directoryPath)
-    )
-  })
 }
 
 function buildRenamedFilename(currentName: string, nextName: string): string {
@@ -283,31 +387,105 @@ async function getUniqueDestination(
   return candidate
 }
 
-async function listAssetsInDirectory(
-  directoryPath: string,
+async function listAssetFiles(
+  workspacePath: string,
   kind: AssetKind,
-): Promise<Asset[]> {
+): Promise<AssetFile[]> {
+  const directoryPath = getAssetDirectory(workspacePath, kind)
+
   if (!(await pathExists(directoryPath))) {
     return []
   }
 
   const dirents = await readdir(directoryPath, { withFileTypes: true })
-  const assets: Asset[] = []
+  const files: AssetFile[] = []
 
   for (const dirent of dirents) {
     if (!dirent.isFile() || dirent.name.startsWith('.')) {
       continue
     }
 
-    assets.push({
+    files.push({
       name: dirent.name,
-      path: path.join(directoryPath, dirent.name),
       kind,
+      source: getAssetSource(kind, dirent.name),
     })
   }
 
-  return assets.sort((left, right) => {
-    return left.name.localeCompare(right.name, 'pt-BR')
+  return files
+}
+
+async function listWorkspaceAssetFiles(
+  workspacePath: string,
+): Promise<AssetFile[]> {
+  return [
+    ...(await listAssetFiles(workspacePath, 'audio')),
+    ...(await listAssetFiles(workspacePath, 'video')),
+    ...(await listAssetFiles(workspacePath, 'image')),
+  ]
+}
+
+async function ensureAssetsMetadata(
+  workspacePath: string,
+  assets: Asset[],
+  missingMetadataIds: Set<string>,
+  persistedIds: Set<string>,
+): Promise<Asset[]> {
+  const nextAssets: Asset[] = []
+
+  for (const asset of assets) {
+    const needsExtraction =
+      !persistedIds.has(asset.id) || missingMetadataIds.has(asset.id)
+
+    if (!needsExtraction) {
+      nextAssets.push(asset)
+      continue
+    }
+
+    try {
+      const filePath = resolveAssetSource(workspacePath, asset.source)
+      const metadata = await getMediaMetadata(filePath, asset.kind)
+      nextAssets.push({
+        ...asset,
+        metadata,
+      })
+    } catch (error) {
+      console.error('[assets] failed to extract metadata', error)
+      nextAssets.push({
+        ...asset,
+        metadata: null,
+      })
+    }
+  }
+
+  return nextAssets
+}
+
+function syncAssetsWithFiles(
+  persistedAssets: Asset[],
+  files: AssetFile[],
+): Asset[] {
+  const persistedBySource = new Map<string, Asset>()
+
+  for (const asset of persistedAssets) {
+    if (!persistedBySource.has(asset.source)) {
+      persistedBySource.set(asset.source, asset)
+    }
+  }
+
+  return files.map((file) => {
+    const persisted = findPersistedAsset(persistedBySource, file)
+
+    if (persisted) {
+      return {
+        ...persisted,
+        name: file.name,
+        kind: file.kind,
+        source: file.source,
+      }
+    }
+
+    return createAsset(file)
   })
 }
 
@@ -328,20 +506,25 @@ export async function listWorkspaceAssets(
 
   await ensureAssetFolders(workspacePath)
 
-  return {
-    audio: await listAssetsInDirectory(
-      getAssetDirectory(workspacePath, 'audio'),
-      'audio',
-    ),
-    videos: await listAssetsInDirectory(
-      getAssetDirectory(workspacePath, 'video'),
-      'video',
-    ),
-    images: await listAssetsInDirectory(
-      getAssetDirectory(workspacePath, 'image'),
-      'image',
-    ),
+  const marker = await getOrCreateWorkspaceMarker(workspacePath)
+  const files = await listWorkspaceAssetFiles(workspacePath)
+  const syncedAssets = syncAssetsWithFiles(marker.assets, files)
+  const persistedIds = new Set(marker.assets.map((asset) => asset.id))
+  const assets = await ensureAssetsMetadata(
+    workspacePath,
+    syncedAssets,
+    new Set(marker.assetsMissingMetadata),
+    persistedIds,
+  )
+  const extractedMetadata =
+    marker.assetsMissingMetadata.length > 0 ||
+    syncedAssets.some((asset) => !persistedIds.has(asset.id))
+
+  if (haveAssetsChanged(marker.assets, assets) || extractedMetadata) {
+    await persistWorkspaceAssets(workspacePath, assets)
   }
+
+  return groupAssetsByKind(assets)
 }
 
 export async function importWorkspaceAssetPaths(
@@ -394,14 +577,29 @@ export async function importWorkspaceAssetPaths(
 
       await copyFile(filePath, destinationPath)
 
-      imported.push({
-        name: path.basename(destinationPath),
-        path: destinationPath,
-        kind: assetKind,
-      })
+      const name = path.basename(destinationPath)
+      const metadata = await getMediaMetadata(destinationPath, assetKind)
+
+      imported.push(
+        createAsset(
+          {
+            name,
+            kind: assetKind,
+            source: getAssetSource(assetKind, name),
+          },
+          new Date().toISOString(),
+          metadata,
+        ),
+      )
     } catch {
       skipped.push(filename)
     }
+  }
+
+  if (imported.length > 0) {
+    const marker = await getOrCreateWorkspaceMarker(workspacePath)
+
+    await persistWorkspaceAssets(workspacePath, [...marker.assets, ...imported])
   }
 
   return {
@@ -450,11 +648,11 @@ export async function importWorkspaceAssets(
 
 export async function renameWorkspaceAsset(
   workspacePath: string,
-  assetPath: string,
+  assetId: string,
   nextName: string,
 ): Promise<WorkspaceAssets> {
-  if (typeof workspacePath !== 'string' || typeof assetPath !== 'string') {
-    throw new Error('Invalid asset path')
+  if (typeof workspacePath !== 'string' || typeof assetId !== 'string') {
+    throw new Error('Invalid asset')
   }
 
   if (typeof nextName !== 'string') {
@@ -465,10 +663,19 @@ export async function renameWorkspaceAsset(
     throw new Error('Workspace not found')
   }
 
-  const resolvedAssetPath = path.resolve(assetPath)
+  const assets = await listWorkspaceAssets(workspacePath)
+  const asset = findAssetById(assets, assetId)
+
+  if (!asset) {
+    throw new Error('Asset not found')
+  }
+
+  const resolvedAssetPath = path.resolve(
+    resolveAssetSource(workspacePath, asset.source),
+  )
 
   if (!isWorkspaceAssetFile(workspacePath, resolvedAssetPath)) {
-    throw new Error('Invalid asset path')
+    throw new Error('Invalid asset source')
   }
 
   if (!(await pathExists(resolvedAssetPath))) {
@@ -481,8 +688,7 @@ export async function renameWorkspaceAsset(
     throw new Error('Asset not found')
   }
 
-  const currentName = path.basename(resolvedAssetPath)
-  const nextFilename = buildRenamedFilename(currentName, nextName)
+  const nextFilename = buildRenamedFilename(asset.name, nextName)
   const directoryPath = path.dirname(resolvedAssetPath)
   const nextPath = path.resolve(directoryPath, nextFilename)
 
@@ -491,42 +697,63 @@ export async function renameWorkspaceAsset(
   }
 
   await renameAssetFile(resolvedAssetPath, nextPath)
-  previewCache.delete(resolvedAssetPath)
+
+  const marker = await getOrCreateWorkspaceMarker(workspacePath)
+  const nextAssets = marker.assets.map((item) => {
+    if (item.id !== assetId) {
+      return item
+    }
+
+    return {
+      ...item,
+      name: nextFilename,
+      source: getAssetSource(item.kind, nextFilename),
+    }
+  })
+
+  await persistWorkspaceAssets(workspacePath, nextAssets)
 
   return listWorkspaceAssets(workspacePath)
 }
 
 export async function getAssetPreview(
   workspacePath: string,
-  assetPath: string,
+  assetId: string,
 ): Promise<string | null> {
-  if (typeof workspacePath !== 'string' || typeof assetPath !== 'string') {
-    throw new Error('Invalid asset path')
+  if (typeof workspacePath !== 'string' || typeof assetId !== 'string') {
+    throw new Error('Invalid asset')
   }
 
-  const resolvedAssetPath = path.resolve(assetPath)
+  const marker = await readWorkspaceMarker(workspacePath)
+  const asset = marker?.assets.find((item) => item.id === assetId)
 
-  if (!isWorkspaceAssetFile(workspacePath, resolvedAssetPath)) {
-    throw new Error('Invalid asset path')
+  if (!asset) {
+    throw new Error('Asset not found')
   }
 
-  const kind = getAssetKind(resolvedAssetPath)
-
-  if (kind !== 'image' && kind !== 'video') {
+  if (asset.kind !== 'image' && asset.kind !== 'video') {
     return null
   }
 
-  if (previewCache.has(resolvedAssetPath)) {
-    return previewCache.get(resolvedAssetPath) ?? null
+  if (previewCache.has(assetId)) {
+    return previewCache.get(assetId) ?? null
+  }
+
+  const resolvedAssetPath = path.resolve(
+    resolveAssetSource(workspacePath, asset.source),
+  )
+
+  if (!isWorkspaceAssetFile(workspacePath, resolvedAssetPath)) {
+    throw new Error('Invalid asset source')
   }
 
   if (!(await pathExists(resolvedAssetPath))) {
-    previewCache.set(resolvedAssetPath, null)
+    previewCache.set(assetId, null)
     return null
   }
 
-  const preview = await createAssetPreview(resolvedAssetPath, kind)
-  previewCache.set(resolvedAssetPath, preview)
+  const preview = await createAssetPreview(resolvedAssetPath, asset.kind)
+  previewCache.set(assetId, preview)
   return preview
 }
 

@@ -85,7 +85,7 @@ export function getImportAssetsError(
 }
 
 export async function renameAssetInCurrentWorkspace(
-  assetPath: string,
+  assetId: string,
   nextName: string,
 ): Promise<void> {
   const workspace = useWorkspaceStore.getState().currentWorkspace
@@ -94,7 +94,7 @@ export async function renameAssetInCurrentWorkspace(
     return
   }
 
-  const assets = await renameWorkspaceAsset(workspace.path, assetPath, nextName)
+  const assets = await renameWorkspaceAsset(workspace.path, assetId, nextName)
 
   useWorkspaceStore.getState().setAssets(assets)
 }

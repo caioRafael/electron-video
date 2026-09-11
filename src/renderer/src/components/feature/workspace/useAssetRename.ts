@@ -54,7 +54,7 @@ export function useAssetRename(asset: Asset) {
     isCommittingRef.current = true
 
     try {
-      await renameAssetInCurrentWorkspace(asset.path, nextName)
+      await renameAssetInCurrentWorkspace(asset.id, nextName)
       hasCommittedRef.current = true
       setError('')
       setIsRenaming(false)

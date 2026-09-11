@@ -5,10 +5,19 @@ directories:
 files:
   - '!**/.vscode/*'
   - '!src/*'
+  - '!scripts/*'
+  - '!licenses/*'
+  - '!resources/ffmpeg/**'
+  - '!.cache/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintcache,.eslintrc.json,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraResources:
+  - from: resources/ffmpeg
+    to: ffmpeg
+  - from: licenses
+    to: licenses
 asarUnpack:
   - resources/**
 win:

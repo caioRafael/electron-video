@@ -1,6 +1,6 @@
 export function getAssetPreview(
   workspacePath: string,
-  assetPath: string,
+  assetId: string,
 ): Promise<string | null> {
-  return window.api.workspace.getAssetPreview(workspacePath, assetPath)
+  return window.api.workspace.getAssetPreview(workspacePath, assetId)
 }

@@ -21,7 +21,7 @@ export function useAssetPreview(asset: Asset) {
 
     async function loadPreview() {
       try {
-        const preview = await getAssetPreview(currentWorkspacePath, asset.path)
+        const preview = await getAssetPreview(currentWorkspacePath, asset.id)
 
         if (!cancelled) {
           setPreviewUrl(preview)
@@ -38,7 +38,7 @@ export function useAssetPreview(asset: Asset) {
     return () => {
       cancelled = true
     }
-  }, [workspacePath, asset.path, asset.kind])
+  }, [workspacePath, asset.id, asset.kind])
 
   return previewUrl
 }

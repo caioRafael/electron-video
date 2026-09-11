@@ -1,6 +1,6 @@
 {
   "name": "video-lab-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -11,14 +11,16 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "start": "electron-vite preview",
-    "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "start": "node scripts/prepare-ffmpeg.mjs && electron-vite preview",
+    "dev": "node scripts/prepare-ffmpeg.mjs && electron-vite dev",
+    "build": "node scripts/prepare-ffmpeg.mjs && npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
+    "prepare:ffmpeg": "node scripts/prepare-ffmpeg.mjs",
+    "verify:media": "node scripts/verify-media-runtime.mjs",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:win": "node scripts/prepare-ffmpeg.mjs --platform win32-x64 && npm run build && electron-builder --win",
+    "build:mac": "node scripts/prepare-ffmpeg.mjs && electron-vite build && electron-builder --mac",
+    "build:linux": "node scripts/prepare-ffmpeg.mjs --platform linux-x64 && npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

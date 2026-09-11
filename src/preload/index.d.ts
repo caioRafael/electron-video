@@ -4,6 +4,7 @@ import {
   ImportAssetsResult,
   WorkspaceAssets,
 } from '../shared/assets'
+import { MediaRuntimeInfo } from '../shared/media'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 
 interface WorkspaceApi {
@@ -22,18 +23,23 @@ interface WorkspaceApi {
   ) => Promise<ImportAssetsResult>
   renameAsset: (
     workspacePath: string,
-    assetPath: string,
+    assetId: string,
     nextName: string,
   ) => Promise<WorkspaceAssets>
   getAssetPreview: (
     workspacePath: string,
-    assetPath: string,
+    assetId: string,
   ) => Promise<string | null>
+}
+
+interface MediaApi {
+  getRuntimeInfo: () => Promise<MediaRuntimeInfo>
 }
 
 interface AppApi {
   getPathForFile: (file: File) => string
   workspace: WorkspaceApi
+  media: MediaApi
 }
 
 declare global {
