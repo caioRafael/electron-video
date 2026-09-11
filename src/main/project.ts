@@ -5,7 +5,9 @@ import {
   Project,
   UpdateProjectInput,
   normalizeProject,
+  projectNeedsTimelineMigration,
 } from '../shared/project'
+import { createEmptyTimeline } from '../shared/timeline'
 import { pathExists } from './fs'
 import { readWorkspaceMarker } from './workspace-marker'
 
@@ -27,6 +29,7 @@ function createProject(name: string): Project {
     name,
     createdAt: now,
     updatedAt: now,
+    timeline: createEmptyTimeline(),
   }
 }
 
@@ -36,6 +39,23 @@ function serializeProject(project: Project): Project {
     name: project.name,
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
+    timeline: {
+      tracks: project.timeline.tracks.map((track) => {
+        return {
+          id: track.id,
+          kind: track.kind,
+          clips: track.clips.map((clip) => {
+            return {
+              id: clip.id,
+              assetId: clip.assetId,
+              start: clip.start,
+              duration: clip.duration,
+              sourceStart: clip.sourceStart,
+            }
+          }),
+        }
+      }),
+    },
   }
 }
 
@@ -71,6 +91,17 @@ async function readWorkspaceProject(workspacePath: string): Promise<Project> {
 
   if (!project) {
     throw new Error('Invalid project file')
+  }
+
+  if (projectNeedsTimelineMigration(parsed)) {
+    const migratedProject: Project = {
+      ...project,
+      updatedAt: new Date().toISOString(),
+    }
+
+    await writeWorkspaceProject(workspacePath, migratedProject)
+
+    return migratedProject
   }
 
   return project
@@ -123,6 +154,7 @@ export async function updateWorkspaceProject(
     name,
     createdAt: project.createdAt,
     updatedAt: new Date().toISOString(),
+    timeline: project.timeline,
   }
 
   await writeWorkspaceProject(workspacePath, nextProject)
