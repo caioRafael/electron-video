@@ -45,10 +45,19 @@ const api = {
     getAssetPreview: (workspacePath: string, assetId: string) => {
       return ipcRenderer.invoke('get-asset-preview', workspacePath, assetId)
     },
+    setCurrent: (workspacePath: string) => {
+      return ipcRenderer.invoke('set-current-workspace', workspacePath)
+    },
+    clearCurrent: () => {
+      return ipcRenderer.invoke('clear-current-workspace')
+    },
   },
   media: {
     getRuntimeInfo: () => {
       return ipcRenderer.invoke('get-media-runtime-info')
+    },
+    getSource: (assetId: string) => {
+      return ipcRenderer.invoke('get-media-source', assetId)
     },
   },
   project: {

@@ -4,7 +4,7 @@ import {
   ImportAssetsResult,
   WorkspaceAssets,
 } from '../shared/assets'
-import { MediaRuntimeInfo } from '../shared/media'
+import { MediaRuntimeInfo, MediaSource } from '../shared/media'
 import { Project, UpdateProjectInput } from '../shared/project'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 
@@ -31,10 +31,13 @@ interface WorkspaceApi {
     workspacePath: string,
     assetId: string,
   ) => Promise<string | null>
+  setCurrent: (workspacePath: string) => Promise<void>
+  clearCurrent: () => Promise<void>
 }
 
 interface MediaApi {
   getRuntimeInfo: () => Promise<MediaRuntimeInfo>
+  getSource: (assetId: string) => Promise<MediaSource>
 }
 
 interface ProjectApi {

@@ -11,7 +11,12 @@ import {
   listWorkspaceAssets,
   renameWorkspaceAsset,
 } from './assets'
+import {
+  registerMediaProtocol,
+  registerMediaProtocolPrivileges,
+} from './media/protocol'
 import { getMediaRuntimeInfo } from './media/runtime'
+import { getMediaSource } from './media/source'
 import { getWorkspaceProject, updateWorkspaceProject } from './project'
 import {
   createWorkspace,
@@ -19,6 +24,12 @@ import {
   listWorkspaceFiles,
   listWorkspaces,
 } from './workspace'
+import {
+  clearCurrentWorkspacePath,
+  setCurrentWorkspacePath,
+} from './workspace-session'
+
+registerMediaProtocolPrivileges()
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -115,7 +126,17 @@ app.whenReady().then(() => {
       return updateWorkspaceProject(workspacePath, input)
     },
   )
+  ipcMain.handle('set-current-workspace', (_event, workspacePath: string) => {
+    return setCurrentWorkspacePath(workspacePath)
+  })
+  ipcMain.handle('clear-current-workspace', () => {
+    clearCurrentWorkspacePath()
+  })
+  ipcMain.handle('get-media-source', (_event, assetId: string) => {
+    return getMediaSource(assetId)
+  })
 
+  registerMediaProtocol()
   createWindow()
 
   app.on('activate', function () {
