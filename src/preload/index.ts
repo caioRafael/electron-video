@@ -51,6 +51,18 @@ const api = {
       return ipcRenderer.invoke('get-media-runtime-info')
     },
   },
+  project: {
+    get: (workspacePath: string) => {
+      return ipcRenderer.invoke('get-workspace-project', workspacePath)
+    },
+    update: (workspacePath: string, input: { name: string }) => {
+      return ipcRenderer.invoke(
+        'update-workspace-project',
+        workspacePath,
+        input,
+      )
+    },
+  },
 }
 
 if (process.contextIsolated) {

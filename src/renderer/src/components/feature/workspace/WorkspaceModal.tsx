@@ -6,7 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { selectWorkspace } from '@/services/workspace/session'
+import { getProjectError, selectWorkspace } from '@/services/workspace/session'
 import { useWorkspaceStore } from '@/stores/workspace.store'
 import { CircleNotchIcon, PlusIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
@@ -22,12 +22,16 @@ export function WorkspaceModal({ open }: WorkspaceModalProps) {
   const [openingWorkspaceId, setOpeningWorkspaceId] = useState<string | null>(
     null,
   )
+  const [error, setError] = useState('')
 
   async function handleSelectWorkspace(workspace: Workspace) {
     setOpeningWorkspaceId(workspace.id)
+    setError('')
 
     try {
       await selectWorkspace(workspace)
+    } catch (selectError) {
+      setError(getProjectError(selectError))
     } finally {
       setOpeningWorkspaceId(null)
     }
@@ -60,6 +64,7 @@ export function WorkspaceModal({ open }: WorkspaceModalProps) {
                 <PlusIcon /> Novo Workspace
               </Button>
             </div>
+            {error ? <p className="text-destructive">{error}</p> : null}
             {workspaces.length === 0 ? (
               <p className="text-muted-foreground">
                 Nenhum workspace criado ainda

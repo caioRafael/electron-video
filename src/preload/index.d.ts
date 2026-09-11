@@ -5,6 +5,7 @@ import {
   WorkspaceAssets,
 } from '../shared/assets'
 import { MediaRuntimeInfo } from '../shared/media'
+import { Project, UpdateProjectInput } from '../shared/project'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 
 interface WorkspaceApi {
@@ -36,10 +37,16 @@ interface MediaApi {
   getRuntimeInfo: () => Promise<MediaRuntimeInfo>
 }
 
+interface ProjectApi {
+  get: (workspacePath: string) => Promise<Project>
+  update: (workspacePath: string, input: UpdateProjectInput) => Promise<Project>
+}
+
 interface AppApi {
   getPathForFile: (file: File) => string
   workspace: WorkspaceApi
   media: MediaApi
+  project: ProjectApi
 }
 
 declare global {

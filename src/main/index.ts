@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssetKind } from '../shared/assets'
+import { UpdateProjectInput } from '../shared/project'
 import {
   getAssetPreview,
   importWorkspaceAssetPaths,
@@ -11,6 +12,7 @@ import {
   renameWorkspaceAsset,
 } from './assets'
 import { getMediaRuntimeInfo } from './media/runtime'
+import { getWorkspaceProject, updateWorkspaceProject } from './project'
 import {
   createWorkspace,
   getDirectoryPath,
@@ -104,6 +106,15 @@ app.whenReady().then(() => {
     },
   )
   ipcMain.handle('get-media-runtime-info', () => getMediaRuntimeInfo())
+  ipcMain.handle('get-workspace-project', (_event, workspacePath: string) => {
+    return getWorkspaceProject(workspacePath)
+  })
+  ipcMain.handle(
+    'update-workspace-project',
+    (_event, workspacePath: string, input: UpdateProjectInput) => {
+      return updateWorkspaceProject(workspacePath, input)
+    },
+  )
 
   createWindow()
 

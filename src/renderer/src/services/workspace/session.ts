@@ -4,6 +4,8 @@ import {
   ImportAssetsResult,
 } from '@shared/assets'
 import { Workspace } from '@shared/workspace'
+import { getWorkspaceProject } from '@/services/project/get.service'
+import { updateWorkspaceProject } from '@/services/project/update.service'
 import { createWorkspace } from '@/services/workspace/create.service'
 import { importWorkspaceAssetPaths } from '@/services/workspace/import-asset-paths.service'
 import { importWorkspaceAssets } from '@/services/workspace/import-assets.service'
@@ -18,9 +20,11 @@ export async function refreshWorkspaces(): Promise<void> {
 }
 
 export async function selectWorkspace(workspace: Workspace): Promise<void> {
+  const project = await getWorkspaceProject(workspace.path)
   const assets = await listWorkspaceAssets(workspace.path)
 
   useWorkspaceStore.getState().setCurrentWorkspace(workspace)
+  useWorkspaceStore.getState().setCurrentProject(project)
   useWorkspaceStore.getState().setAssets(assets)
 }
 
@@ -113,7 +117,30 @@ export function getRenameAssetError(error: unknown): string {
   return 'Não foi possível renomear o arquivo'
 }
 
+export function getProjectError(error: unknown): string {
+  const message = error instanceof Error ? error.message : ''
+
+  if (message.includes('Invalid project file')) {
+    return 'O arquivo do projeto está inválido'
+  }
+
+  return 'Não foi possível abrir o projeto'
+}
+
+export async function updateCurrentProjectName(name: string): Promise<void> {
+  const workspace = useWorkspaceStore.getState().currentWorkspace
+
+  if (!workspace) {
+    return
+  }
+
+  const project = await updateWorkspaceProject(workspace.path, { name })
+
+  useWorkspaceStore.getState().setCurrentProject(project)
+}
+
 export function closeWorkspace(): void {
   useWorkspaceStore.getState().setCurrentWorkspace(null)
+  useWorkspaceStore.getState().setCurrentProject(null)
   useWorkspaceStore.getState().setAssets(EMPTY_WORKSPACE_ASSETS)
 }

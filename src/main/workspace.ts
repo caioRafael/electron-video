@@ -5,6 +5,7 @@ import path from 'node:path'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 import { ensureAssetFolders } from './assets'
 import { pathExists } from './fs'
+import { ensureWorkspaceProject } from './project'
 import { createWorkspaceMarker, writeWorkspaceMarker } from './workspace-marker'
 
 const REGISTRY_FILE = 'workspaces.json'
@@ -91,6 +92,7 @@ export async function createWorkspace(
     workspacePath,
     createWorkspaceMarker(workspace.id, workspace.name),
   )
+  await ensureWorkspaceProject(workspacePath, workspace.name)
 
   const workspaces = await readRegistry()
   const nextWorkspaces = [
