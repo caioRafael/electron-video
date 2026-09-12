@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { UpdateProjectTimelineInput } from '../shared/project'
 
 const api = {
   getPathForFile: (file: File): string => {
@@ -67,6 +68,16 @@ const api = {
     update: (workspacePath: string, input: { name: string }) => {
       return ipcRenderer.invoke(
         'update-workspace-project',
+        workspacePath,
+        input,
+      )
+    },
+    updateTimeline: (
+      workspacePath: string,
+      input: UpdateProjectTimelineInput,
+    ) => {
+      return ipcRenderer.invoke(
+        'update-workspace-project-timeline',
         workspacePath,
         input,
       )

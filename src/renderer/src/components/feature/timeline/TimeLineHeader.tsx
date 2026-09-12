@@ -5,18 +5,29 @@ import {
   PlayIcon,
   PlusIcon,
 } from '@phosphor-icons/react'
-import {
-  MOCK_CURRENT_TIME,
-  MOCK_DURATION,
-  MOCK_ZOOM_PERCENT,
-} from './timeline.mock'
 import { formatTimecode } from './timeline.utils'
 
 interface TimeLineHeaderProps {
   title: string
+  currentTime: number
+  duration: number
+  zoomPercent: number
+  canZoomIn: boolean
+  canZoomOut: boolean
+  onZoomIn: () => void
+  onZoomOut: () => void
 }
 
-export function TimeLineHeader({ title }: TimeLineHeaderProps) {
+export function TimeLineHeader({
+  title,
+  currentTime,
+  duration,
+  zoomPercent,
+  canZoomIn,
+  canZoomOut,
+  onZoomIn,
+  onZoomOut,
+}: TimeLineHeaderProps) {
   return (
     <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-2.5 py-2">
       <p className="min-w-0 truncate font-medium">{title}</p>
@@ -30,11 +41,9 @@ export function TimeLineHeader({ title }: TimeLineHeaderProps) {
           <PlayIcon />
         </Button>
         <p className="tabular-nums text-muted-foreground">
-          <span className="text-foreground">
-            {formatTimecode(MOCK_CURRENT_TIME)}
-          </span>
+          <span className="text-foreground">{formatTimecode(currentTime)}</span>
           {' / '}
-          {formatTimecode(MOCK_DURATION)}
+          {formatTimecode(duration)}
         </p>
       </div>
       <div className="flex items-center justify-end">
@@ -43,17 +52,21 @@ export function TimeLineHeader({ title }: TimeLineHeaderProps) {
           variant="ghost"
           size="icon-sm"
           aria-label="Diminuir zoom"
+          disabled={!canZoomOut}
+          onClick={onZoomOut}
         >
           <MagnifyingGlassMinusIcon />
         </Button>
         <span className="w-10 text-center tabular-nums text-muted-foreground">
-          {MOCK_ZOOM_PERCENT}%
+          {zoomPercent}%
         </span>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label="Aumentar zoom"
+          disabled={!canZoomIn}
+          onClick={onZoomIn}
         >
           <MagnifyingGlassPlusIcon />
         </Button>

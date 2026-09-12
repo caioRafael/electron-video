@@ -1,16 +1,19 @@
 import { TRACK_LABEL_WIDTH } from './timeline.constants'
-import { MOCK_PIXELS_PER_SECOND } from './timeline.mock'
 
 interface TimeLinePlayheadProps {
   currentTime: number
+  pixelsPerSecond: number
 }
 
-export function TimeLinePlayhead({ currentTime }: TimeLinePlayheadProps) {
+export function TimeLinePlayhead({
+  currentTime,
+  pixelsPerSecond,
+}: TimeLinePlayheadProps) {
   return (
     <div
       className="pointer-events-none absolute top-0 bottom-0 z-20"
       style={{
-        left: TRACK_LABEL_WIDTH + currentTime * MOCK_PIXELS_PER_SECOND,
+        left: TRACK_LABEL_WIDTH + currentTime * pixelsPerSecond,
       }}
       aria-hidden
     >

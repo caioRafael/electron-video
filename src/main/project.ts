@@ -4,10 +4,11 @@ import path from 'node:path'
 import {
   Project,
   UpdateProjectInput,
+  UpdateProjectTimelineInput,
   normalizeProject,
   projectNeedsTimelineMigration,
 } from '../shared/project'
-import { createEmptyTimeline } from '../shared/timeline'
+import { createEmptyTimeline, timelineSchema } from '../shared/timeline'
 import { pathExists } from './fs'
 import { readWorkspaceMarker } from './workspace-marker'
 
@@ -155,6 +156,30 @@ export async function updateWorkspaceProject(
     createdAt: project.createdAt,
     updatedAt: new Date().toISOString(),
     timeline: project.timeline,
+  }
+
+  await writeWorkspaceProject(workspacePath, nextProject)
+
+  return nextProject
+}
+
+export async function updateWorkspaceProjectTimeline(
+  workspacePath: string,
+  input: UpdateProjectTimelineInput,
+): Promise<Project> {
+  const parsedTimeline = timelineSchema.safeParse(input?.timeline)
+
+  if (typeof workspacePath !== 'string' || !parsedTimeline.success) {
+    throw new Error('Invalid project')
+  }
+
+  const project = await getWorkspaceProject(workspacePath)
+  const nextProject: Project = {
+    id: project.id,
+    name: project.name,
+    createdAt: project.createdAt,
+    updatedAt: new Date().toISOString(),
+    timeline: parsedTimeline.data,
   }
 
   await writeWorkspaceProject(workspacePath, nextProject)

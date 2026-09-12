@@ -13,6 +13,10 @@ export interface UpdateProjectInput {
   name: string
 }
 
+export interface UpdateProjectTimelineInput {
+  timeline: Timeline
+}
+
 export const persistedProjectSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),

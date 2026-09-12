@@ -3,7 +3,10 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { AssetKind } from '../shared/assets'
-import { UpdateProjectInput } from '../shared/project'
+import {
+  UpdateProjectInput,
+  UpdateProjectTimelineInput,
+} from '../shared/project'
 import {
   getAssetPreview,
   importWorkspaceAssetPaths,
@@ -17,7 +20,11 @@ import {
 } from './media/protocol'
 import { getMediaRuntimeInfo } from './media/runtime'
 import { getMediaSource } from './media/source'
-import { getWorkspaceProject, updateWorkspaceProject } from './project'
+import {
+  getWorkspaceProject,
+  updateWorkspaceProject,
+  updateWorkspaceProjectTimeline,
+} from './project'
 import {
   createWorkspace,
   getDirectoryPath,
@@ -124,6 +131,12 @@ app.whenReady().then(() => {
     'update-workspace-project',
     (_event, workspacePath: string, input: UpdateProjectInput) => {
       return updateWorkspaceProject(workspacePath, input)
+    },
+  )
+  ipcMain.handle(
+    'update-workspace-project-timeline',
+    (_event, workspacePath: string, input: UpdateProjectTimelineInput) => {
+      return updateWorkspaceProjectTimeline(workspacePath, input)
     },
   )
   ipcMain.handle('set-current-workspace', (_event, workspacePath: string) => {

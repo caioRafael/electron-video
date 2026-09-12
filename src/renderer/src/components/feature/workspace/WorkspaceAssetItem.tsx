@@ -2,7 +2,8 @@ import { Asset, AssetViewMode, getAssetExtension } from '@shared/assets'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PencilSimpleIcon } from '@phosphor-icons/react'
-import { FormEvent, KeyboardEvent, useId } from 'react'
+import { FormEvent, KeyboardEvent, MouseEvent, useId } from 'react'
+import { useAddAssetToTimeline } from './useAddAssetToTimeline'
 import { useAssetRename } from './useAssetRename'
 import { WorkspaceAssetPreview } from './WorkspaceAssetPreview'
 
@@ -26,8 +27,11 @@ export function WorkspaceAssetItem({
     cancelRename,
     commitRename,
   } = useAssetRename(asset)
+  const { isAdding, error: addError, addAsset } = useAddAssetToTimeline()
   const errorId = useId()
   const isGrid = viewMode === 'grid'
+  const isDisabled = disabled || isAdding
+  const canAdd = !isDisabled && !isRenaming
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -39,6 +43,15 @@ export function WorkspaceAssetItem({
       event.preventDefault()
       cancelRename()
     }
+  }
+
+  function handleAddToTimeline() {
+    addAsset(asset)
+  }
+
+  function handleStartRename(event: MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation()
+    startRename()
   }
 
   return (
@@ -53,18 +66,26 @@ export function WorkspaceAssetItem({
         className={
           isGrid
             ? 'relative aspect-video w-full'
-            : 'size-10 shrink-0 self-center'
+            : 'relative size-10 shrink-0 self-center'
         }
       >
-        <WorkspaceAssetPreview asset={asset} />
+        <button
+          type="button"
+          className="size-full focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:outline-none"
+          disabled={!canAdd}
+          onClick={handleAddToTimeline}
+          aria-label={`Adicionar ${asset.name} à timeline`}
+        >
+          <WorkspaceAssetPreview asset={asset} />
+        </button>
         {isGrid && !isRenaming ? (
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             className="absolute top-1 right-1 bg-background/80 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
-            disabled={disabled}
-            onClick={startRename}
+            disabled={isDisabled}
+            onClick={handleStartRename}
             aria-label={`Renomear ${asset.name}`}
           >
             <PencilSimpleIcon />
@@ -102,29 +123,33 @@ export function WorkspaceAssetItem({
           ) : null}
         </form>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-1">
-          <button
-            type="button"
-            className="min-w-0 flex-1 truncate text-left focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:outline-none"
-            title={asset.name}
-            disabled={disabled}
-            onDoubleClick={startRename}
-          >
-            {asset.name}
-          </button>
-          {isGrid ? null : (
-            <Button
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 items-center gap-1">
+            <button
               type="button"
-              variant="ghost"
-              size="icon-xs"
-              className="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
-              disabled={disabled}
-              onClick={startRename}
-              aria-label={`Renomear ${asset.name}`}
+              className="min-w-0 flex-1 truncate text-left focus-visible:ring-1 focus-visible:ring-ring/50 focus-visible:outline-none"
+              title={asset.name}
+              disabled={!canAdd}
+              onClick={handleAddToTimeline}
+              aria-label={`Adicionar ${asset.name} à timeline`}
             >
-              <PencilSimpleIcon />
-            </Button>
-          )}
+              {asset.name}
+            </button>
+            {isGrid ? null : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
+                disabled={isDisabled}
+                onClick={handleStartRename}
+                aria-label={`Renomear ${asset.name}`}
+              >
+                <PencilSimpleIcon />
+              </Button>
+            )}
+          </div>
+          {addError ? <p className="text-destructive">{addError}</p> : null}
         </div>
       )}
     </li>

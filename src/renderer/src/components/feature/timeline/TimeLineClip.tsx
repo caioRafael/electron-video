@@ -1,40 +1,105 @@
-import { TrackKind } from '@shared/timeline'
-import { MOCK_PIXELS_PER_SECOND } from './timeline.mock'
+import { TrackKind, TrimEdge } from '@shared/timeline'
+import { Button } from '@/components/ui/button'
+import { removeClipFromCurrentTimeline } from '@/services/workspace/session'
+import { useEditorStore } from '@/stores/editor.store'
+import { XIcon } from '@phosphor-icons/react'
+import { cn } from 'cn'
 import { getWaveformBars } from './timeline.utils'
+import { useMoveTimelineClip } from './useMoveTimelineClip'
+import { TimelineClipView } from './useTimelineView'
+import { useTrimTimelineClip } from './useTrimTimelineClip'
 
 interface TimeLineClipProps {
-  label: string
+  clip: TimelineClipView
   kind: TrackKind
-  start: number
-  duration: number
+  pixelsPerSecond: number
 }
 
 export function TimeLineClip({
-  label,
+  clip,
   kind,
-  start,
-  duration,
+  pixelsPerSecond,
 }: TimeLineClipProps) {
-  const width = Math.max(duration * MOCK_PIXELS_PER_SECOND, 8)
+  const selectedClipId = useEditorStore((state) => state.selectedClipId)
+  const setSelectedClipId = useEditorStore((state) => state.setSelectedClipId)
+  const isSelected = selectedClipId === clip.id
+  const { draft, startTrim, moveTrim, endTrim } = useTrimTimelineClip(
+    clip,
+    pixelsPerSecond,
+  )
+  const { offsetSeconds, isDragging, startMove, moveClip, endMove } =
+    useMoveTimelineClip(clip, pixelsPerSecond, () => {
+      setSelectedClipId(clip.id)
+    })
+  const start = draft?.start ?? clip.start + offsetSeconds
+  const duration = draft?.duration ?? clip.duration
+  const width = Math.max(duration * pixelsPerSecond, 8)
   const showDetails = width >= 48
+  const audioBars =
+    kind === 'audio'
+      ? getWaveformBars(
+          clip.label,
+          Math.min(40, Math.max(8, Math.floor(width / 4))),
+        )
+      : []
 
-  if (kind === 'audio') {
-    const bars = getWaveformBars(
-      label,
-      Math.min(40, Math.max(8, Math.floor(width / 4))),
-    )
+  async function handleDelete() {
+    await removeClipFromCurrentTimeline(clip.id)
 
+    if (isSelected) {
+      setSelectedClipId(null)
+    }
+  }
+
+  function renderHandle(edge: TrimEdge, label: string) {
     return (
-      <div
-        className="absolute inset-y-1 overflow-hidden border bg-secondary"
-        style={{ left: start * MOCK_PIXELS_PER_SECOND, width }}
+      <button
+        type="button"
+        aria-label={label}
+        className={
+          edge === 'start'
+            ? 'absolute inset-y-0 left-0 z-10 flex w-2 cursor-ew-resize touch-none flex-col items-center justify-between py-1'
+            : 'absolute inset-y-0 right-0 z-10 flex w-2 cursor-ew-resize touch-none flex-col items-center justify-between py-1'
+        }
+        onPointerDown={(event) => startTrim(edge, event)}
+        onPointerMove={moveTrim}
+        onPointerUp={endTrim}
       >
-        <div className="flex h-full items-center gap-1 px-1.5">
+        {showDetails ? (
+          <>
+            <span className="size-1 bg-background/70" />
+            <span className="size-1 bg-background/70" />
+            <span className="size-1 bg-background/70" />
+          </>
+        ) : null}
+      </button>
+    )
+  }
+
+  return (
+    <div
+      aria-grabbed={isDragging}
+      className={cn(
+        'absolute inset-y-0.5 overflow-hidden border',
+        kind === 'audio' ? 'bg-secondary' : 'border-primary/40 bg-primary/15',
+        isSelected && 'ring-1 ring-primary',
+        isDragging ? 'z-20 cursor-grabbing' : 'z-10 cursor-grab',
+      )}
+      style={{ left: start * pixelsPerSecond, width }}
+      onPointerDown={startMove}
+      onPointerMove={moveClip}
+      onPointerUp={endMove}
+    >
+      {renderHandle('start', `Ajustar início de ${clip.label}`)}
+      {kind === 'audio' ? (
+        <div className="flex h-full items-center gap-1 px-2">
           {showDetails ? (
-            <span className="truncate text-[10px] font-medium">{label}</span>
+            <span className="truncate text-[10px] font-medium">
+              {clip.label}
+            </span>
           ) : null}
           <div className="flex h-4 min-w-0 flex-1 items-center gap-px">
-            {bars.map((height, index) => (
+            {audioBars.map((height, index) => (
               <span
                 key={index}
                 className="w-px bg-foreground/40"
@@ -43,36 +108,25 @@ export function TimeLineClip({
             ))}
           </div>
         </div>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className="absolute inset-y-1 overflow-hidden border border-primary/40 bg-primary/15"
-      style={{ left: start * MOCK_PIXELS_PER_SECOND, width }}
-    >
-      <div className="flex h-full">
-        {showDetails ? (
-          <div className="flex w-1.5 flex-col justify-between py-1">
-            <span className="size-1 bg-background/70" />
-            <span className="size-1 bg-background/70" />
-            <span className="size-1 bg-background/70" />
-          </div>
-        ) : null}
-        {showDetails ? (
-          <p className="min-w-0 flex-1 truncate px-1.5 py-1 text-[10px] font-medium">
-            {label}
-          </p>
-        ) : null}
-        {showDetails ? (
-          <div className="flex w-1.5 flex-col justify-between py-1">
-            <span className="size-1 bg-background/70" />
-            <span className="size-1 bg-background/70" />
-            <span className="size-1 bg-background/70" />
-          </div>
-        ) : null}
-      </div>
+      ) : showDetails ? (
+        <p className="min-w-0 truncate px-2.5 py-1 text-[10px] font-medium">
+          {clip.label}
+        </p>
+      ) : null}
+      {renderHandle('end', `Ajustar fim de ${clip.label}`)}
+      {isSelected ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="absolute top-0 right-2 z-20 bg-background/80"
+          aria-label={`Remover ${clip.label} da timeline`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={handleDelete}
+        >
+          <XIcon />
+        </Button>
+      ) : null}
     </div>
   )
 }

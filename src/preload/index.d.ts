@@ -5,7 +5,11 @@ import {
   WorkspaceAssets,
 } from '../shared/assets'
 import { MediaRuntimeInfo, MediaSource } from '../shared/media'
-import { Project, UpdateProjectInput } from '../shared/project'
+import {
+  Project,
+  UpdateProjectInput,
+  UpdateProjectTimelineInput,
+} from '../shared/project'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 
 interface WorkspaceApi {
@@ -43,6 +47,10 @@ interface MediaApi {
 interface ProjectApi {
   get: (workspacePath: string) => Promise<Project>
   update: (workspacePath: string, input: UpdateProjectInput) => Promise<Project>
+  updateTimeline: (
+    workspacePath: string,
+    input: UpdateProjectTimelineInput,
+  ) => Promise<Project>
 }
 
 interface AppApi {
