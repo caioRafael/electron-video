@@ -4,7 +4,8 @@ import { WorkspaceModal } from './components/feature/workspace/WorkspaceModal'
 import { WorkspaceSidebar } from './components/feature/workspace/WorkspaceSidebar'
 import { AppLayout } from './components/shared/app-layout'
 import { refreshWorkspaces } from './services/workspace/session'
-import { useWorkspaceStore } from './stores/workspace.store'
+import { useWorkspaceStore } from './stores'
+import { TimeLineContainer } from './components/feature/timeline'
 
 export function App() {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace)
@@ -27,7 +28,11 @@ export function App() {
           </>
         }
         top="top middle panel - video player"
-        bottom="bottom middle panel - time line"
+        bottom={
+          <>
+            <TimeLineContainer />
+          </>
+        }
         right="right panel - timeline editor"
       />
       <WorkspaceAssetDropOverlay />
