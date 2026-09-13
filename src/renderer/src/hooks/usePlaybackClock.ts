@@ -1,15 +1,33 @@
 import {
   createEmptyTimeline,
+  getBoundedPlaybackState,
   getTimelineContentDuration,
 } from '@shared/timeline'
 import { useEditorStore } from '@/stores/editor.store'
 import { useWorkspaceStore } from '@/stores/workspace.store'
 import { useEffect } from 'react'
 
-export function usePlayback() {
+export function usePlaybackClock() {
   const isPlaying = useEditorStore((state) => state.isPlaying)
+  const currentTime = useEditorStore((state) => state.currentTime)
   const pause = useEditorStore((state) => state.pause)
   const setCurrentTime = useEditorStore((state) => state.setCurrentTime)
+  const timeline = useWorkspaceStore((state) => state.currentProject?.timeline)
+
+  useEffect(() => {
+    const duration = getTimelineContentDuration(
+      timeline ?? createEmptyTimeline(),
+    )
+    const next = getBoundedPlaybackState(currentTime, duration, isPlaying)
+
+    if (isPlaying && !next.isPlaying) {
+      pause()
+    }
+
+    if (next.currentTime !== currentTime) {
+      setCurrentTime(next.currentTime)
+    }
+  }, [currentTime, isPlaying, pause, setCurrentTime, timeline])
 
   useEffect(() => {
     if (!isPlaying) {
@@ -22,11 +40,11 @@ export function usePlayback() {
     let frameId = 0
 
     function getContentDuration() {
-      const timeline =
+      const currentTimeline =
         useWorkspaceStore.getState().currentProject?.timeline ??
         createEmptyTimeline()
 
-      return getTimelineContentDuration(timeline)
+      return getTimelineContentDuration(currentTimeline)
     }
 
     const initialDuration = getContentDuration()

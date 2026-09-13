@@ -103,6 +103,8 @@ export function getClipSourceTime(clip: Clip, currentTime: number): number {
   return clip.sourceStart + (currentTime - clip.start)
 }
 
+const PLAYBACK_END_EPSILON = 1e-4
+
 export function getActiveClip(
   track: Track,
   currentTime: number,
@@ -118,6 +120,74 @@ export function getActiveClip(
   return {
     clip,
     sourceTime: getClipSourceTime(clip, currentTime),
+  }
+}
+
+export function getPlaybackClip(
+  track: Track,
+  currentTime: number,
+): ActiveClipPlayback | null {
+  const active = getActiveClip(track, currentTime)
+
+  if (active) {
+    return active
+  }
+
+  const ending = track.clips.find((item) => {
+    const clipEnd = item.start + item.duration
+
+    return Math.abs(currentTime - clipEnd) <= PLAYBACK_END_EPSILON
+  })
+
+  if (!ending) {
+    return null
+  }
+
+  const clipEnd = ending.start + ending.duration
+
+  return {
+    clip: ending,
+    sourceTime: getClipSourceTime(ending, clipEnd),
+  }
+}
+
+export interface BoundedPlaybackState {
+  currentTime: number
+  isPlaying: boolean
+}
+
+export function getBoundedPlaybackState(
+  currentTime: number,
+  duration: number,
+  isPlaying: boolean,
+): BoundedPlaybackState {
+  const hasInvalidTime =
+    !Number.isFinite(currentTime) || !Number.isFinite(duration) || duration <= 0
+
+  if (hasInvalidTime) {
+    return {
+      currentTime: 0,
+      isPlaying: false,
+    }
+  }
+
+  if (currentTime > duration) {
+    return {
+      currentTime: duration,
+      isPlaying: false,
+    }
+  }
+
+  if (currentTime < 0) {
+    return {
+      currentTime: 0,
+      isPlaying,
+    }
+  }
+
+  return {
+    currentTime,
+    isPlaying,
   }
 }
 

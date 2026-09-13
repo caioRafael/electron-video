@@ -1,4 +1,4 @@
-import { useEditorStore } from '@/stores/editor.store'
+import { usePlayback } from '@/components/feature/editor'
 import { PointerEvent } from 'react'
 import { TRACK_LABEL_WIDTH } from './timeline.constants'
 
@@ -13,7 +13,7 @@ export function TimeLinePlayhead({
   onScrubStart,
   onScrubMove,
 }: TimeLinePlayheadProps) {
-  const currentTime = useEditorStore((state) => state.currentTime)
+  const { currentTime } = usePlayback()
   return (
     <div
       className="pointer-events-none absolute top-0 bottom-0 z-30"

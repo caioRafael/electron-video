@@ -1,4 +1,4 @@
-import { useEditorStore } from '@/stores/editor.store'
+import { usePlaybackActions } from '@/components/feature/editor'
 import { PointerEvent, RefObject } from 'react'
 import { TRACK_LABEL_WIDTH } from './timeline.constants'
 
@@ -23,7 +23,7 @@ export function useTimelineScrub(
   pixelsPerSecond: number,
   duration: number,
 ) {
-  const setCurrentTime = useEditorStore((state) => state.setCurrentTime)
+  const { setCurrentTime } = usePlaybackActions()
 
   function scrubFromEvent(event: PointerEvent<HTMLElement>) {
     const canvas = canvasRef.current

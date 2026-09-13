@@ -2,7 +2,6 @@ import { findAssetById, WorkspaceAssets } from '@shared/assets'
 import {
   createEmptyTimeline,
   getAssetSourceDuration,
-  getTimelineContentDuration,
   getTimelineDuration,
   getTrackLabel,
   Timeline,
@@ -41,7 +40,6 @@ export interface TimelineTrackView {
 interface TimelineView {
   tracks: TimelineTrackView[]
   duration: number
-  contentDuration: number
   pixelsPerSecond: number
   zoomPercent: number
   canZoomIn: boolean
@@ -132,7 +130,6 @@ export function useTimelineView(): TimelineView {
   return {
     tracks: getTrackView(resolvedTimeline, assets),
     duration: getTimelineDuration(resolvedTimeline),
-    contentDuration: getTimelineContentDuration(resolvedTimeline),
     pixelsPerSecond: getPixelsPerSecond(zoomPercent),
     zoomPercent,
     canZoomIn: zoomPercent < MAX_ZOOM_PERCENT,

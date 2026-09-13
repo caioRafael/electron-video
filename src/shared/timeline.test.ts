@@ -11,7 +11,9 @@ import {
   getAssetClipDuration,
   getAssetSourceDuration,
   getActiveClip,
+  getBoundedPlaybackState,
   getClipSourceTime,
+  getPlaybackClip,
   getTimelineContentDuration,
   getTimelineDuration,
   getTrackKindForAsset,
@@ -229,6 +231,71 @@ describe('getActiveClip', () => {
         0,
       ),
     ).toBeNull()
+  })
+})
+
+describe('getPlaybackClip', () => {
+  const track = {
+    id: 'track_1',
+    kind: 'video' as const,
+    clips: [
+      createClip({ id: 'clip_a', start: 0, duration: 5, sourceStart: 2 }),
+      createClip({ id: 'clip_b', start: 8, duration: 4, sourceStart: 0 }),
+    ],
+  }
+
+  it('keeps the last frame visible at the exact clip end', () => {
+    expect(getPlaybackClip(track, 5)).toEqual({
+      clip: track.clips[0],
+      sourceTime: 7,
+    })
+  })
+
+  it('does not hold a clip across a gap', () => {
+    expect(getPlaybackClip(track, 6)).toBeNull()
+  })
+
+  it('prefers the clip that starts at a shared boundary', () => {
+    const packed = {
+      id: 'track_packed',
+      kind: 'video' as const,
+      clips: [
+        createClip({ id: 'clip_a', start: 0, duration: 5 }),
+        createClip({ id: 'clip_b', start: 5, duration: 3 }),
+      ],
+    }
+
+    expect(getPlaybackClip(packed, 5)?.clip.id).toBe('clip_b')
+  })
+})
+
+describe('getBoundedPlaybackState', () => {
+  it('resets an empty timeline', () => {
+    expect(getBoundedPlaybackState(8, 0, true)).toEqual({
+      currentTime: 0,
+      isPlaying: false,
+    })
+  })
+
+  it('clamps past the content duration and pauses', () => {
+    expect(getBoundedPlaybackState(20, 12, true)).toEqual({
+      currentTime: 12,
+      isPlaying: false,
+    })
+  })
+
+  it('keeps a valid playing state unchanged', () => {
+    expect(getBoundedPlaybackState(4, 12, true)).toEqual({
+      currentTime: 4,
+      isPlaying: true,
+    })
+  })
+
+  it('rejects non-finite values', () => {
+    expect(getBoundedPlaybackState(Number.NaN, 10, true)).toEqual({
+      currentTime: 0,
+      isPlaying: false,
+    })
   })
 })
 

@@ -4,14 +4,19 @@ export interface RulerTick {
 }
 
 export function formatTimecode(seconds: number): string {
-  const total = Math.max(0, Math.floor(seconds))
-  const hours = Math.floor(total / 3600)
-  const minutes = Math.floor((total % 3600) / 60)
-  const rest = total % 60
+  const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0
+  const totalTenths = Math.floor(safe * 10 + 1e-6)
+  const minutes = Math.floor(totalTenths / 600)
+  const restSeconds = Math.floor((totalTenths % 600) / 10)
+  const tenths = totalTenths % 10
+  const hours = Math.floor(minutes / 60)
+  const displayMinutes = minutes % 60
 
-  return [hours, minutes, rest]
-    .map((value) => String(value).padStart(2, '0'))
-    .join(':')
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}:${String(restSeconds).padStart(2, '0')}.${tenths}`
+  }
+
+  return `${String(displayMinutes).padStart(2, '0')}:${String(restSeconds).padStart(2, '0')}.${tenths}`
 }
 
 export function formatRulerTime(seconds: number): string {

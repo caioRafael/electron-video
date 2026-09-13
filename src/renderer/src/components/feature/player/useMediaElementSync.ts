@@ -7,11 +7,23 @@ function seekTo(element: HTMLMediaElement, time: number) {
     return
   }
 
+  if (!Number.isFinite(time) || time < 0) {
+    return
+  }
+
   if (Math.abs(element.currentTime - time) < 0.03) {
     return
   }
 
   element.currentTime = time
+}
+
+function playMedia(element: HTMLMediaElement) {
+  const playback = element.play()
+
+  if (playback) {
+    playback.catch(() => undefined)
+  }
 }
 
 export function useMediaElementSync<T extends HTMLMediaElement>(
@@ -22,7 +34,9 @@ export function useMediaElementSync<T extends HTMLMediaElement>(
 ) {
   const sourceTimeRef = useRef(sourceTime)
   const previousSourceTimeRef = useRef(sourceTime)
+  const isPlayingRef = useRef(isPlaying)
   sourceTimeRef.current = sourceTime
+  isPlayingRef.current = isPlaying
 
   useEffect(() => {
     const element = elementRef.current
@@ -59,7 +73,7 @@ export function useMediaElementSync<T extends HTMLMediaElement>(
     seekTo(element, sourceTimeRef.current)
 
     if (isPlaying) {
-      element.play().catch(() => undefined)
+      playMedia(element)
       return
     }
 
@@ -91,4 +105,45 @@ export function useMediaElementSync<T extends HTMLMediaElement>(
       seekTo(element, sourceTime)
     }
   }, [elementRef, src, sourceTime, isPlaying])
+
+  useEffect(() => {
+    function syncToEditorClock() {
+      if (document.visibilityState !== 'visible') {
+        return
+      }
+
+      const element = elementRef.current
+
+      if (
+        !element ||
+        !src ||
+        element.readyState < HTMLMediaElement.HAVE_METADATA
+      ) {
+        return
+      }
+
+      seekTo(element, sourceTimeRef.current)
+
+      if (isPlayingRef.current) {
+        playMedia(element)
+        return
+      }
+
+      element.pause()
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        syncToEditorClock()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', syncToEditorClock)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', syncToEditorClock)
+    }
+  }, [elementRef, src])
 }
