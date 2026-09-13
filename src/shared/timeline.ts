@@ -84,12 +84,41 @@ export function getTrackEnd(track: Track): number {
   }, 0)
 }
 
-export function getTimelineDuration(timeline: Timeline): number {
-  const contentEnd = timeline.tracks.reduce((end, track) => {
+export function getTimelineContentDuration(timeline: Timeline): number {
+  return timeline.tracks.reduce((end, track) => {
     return Math.max(end, getTrackEnd(track))
   }, 0)
+}
 
-  return Math.max(contentEnd, MIN_TIMELINE_DURATION)
+export function getTimelineDuration(timeline: Timeline): number {
+  return Math.max(getTimelineContentDuration(timeline), MIN_TIMELINE_DURATION)
+}
+
+export interface ActiveClipPlayback {
+  clip: Clip
+  sourceTime: number
+}
+
+export function getClipSourceTime(clip: Clip, currentTime: number): number {
+  return clip.sourceStart + (currentTime - clip.start)
+}
+
+export function getActiveClip(
+  track: Track,
+  currentTime: number,
+): ActiveClipPlayback | null {
+  const clip = track.clips.find((item) => {
+    return item.start <= currentTime && currentTime < item.start + item.duration
+  })
+
+  if (!clip) {
+    return null
+  }
+
+  return {
+    clip,
+    sourceTime: getClipSourceTime(clip, currentTime),
+  }
 }
 
 export function getTrackLabel(kind: TrackKind, index: number): string {

@@ -2,6 +2,7 @@ import { findAssetById, WorkspaceAssets } from '@shared/assets'
 import {
   createEmptyTimeline,
   getAssetSourceDuration,
+  getTimelineContentDuration,
   getTimelineDuration,
   getTrackLabel,
   Timeline,
@@ -17,7 +18,6 @@ import {
   MIN_ZOOM_PERCENT,
   ZOOM_PERCENT_STEP,
 } from './timeline.constants'
-import { MOCK_CURRENT_TIME } from './timeline.mock'
 
 export interface TimelineClipView {
   id: string
@@ -41,8 +41,8 @@ export interface TimelineTrackView {
 interface TimelineView {
   tracks: TimelineTrackView[]
   duration: number
+  contentDuration: number
   pixelsPerSecond: number
-  currentTime: number
   zoomPercent: number
   canZoomIn: boolean
   canZoomOut: boolean
@@ -132,8 +132,8 @@ export function useTimelineView(): TimelineView {
   return {
     tracks: getTrackView(resolvedTimeline, assets),
     duration: getTimelineDuration(resolvedTimeline),
+    contentDuration: getTimelineContentDuration(resolvedTimeline),
     pixelsPerSecond: getPixelsPerSecond(zoomPercent),
-    currentTime: MOCK_CURRENT_TIME,
     zoomPercent,
     canZoomIn: zoomPercent < MAX_ZOOM_PERCENT,
     canZoomOut: zoomPercent > MIN_ZOOM_PERCENT,

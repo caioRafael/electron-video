@@ -7,8 +7,8 @@ export function TimeLineContainer() {
   const {
     tracks,
     duration,
+    contentDuration,
     pixelsPerSecond,
-    currentTime,
     zoomPercent,
     canZoomIn,
     canZoomOut,
@@ -22,8 +22,7 @@ export function TimeLineContainer() {
     <div className="flex h-full min-h-0 flex-col">
       <TimeLineHeader
         title="Timeline"
-        currentTime={currentTime}
-        duration={duration}
+        duration={contentDuration}
         zoomPercent={zoomPercent}
         canZoomIn={canZoomIn}
         canZoomOut={canZoomOut}
@@ -34,7 +33,6 @@ export function TimeLineContainer() {
         tracks={tracks}
         duration={duration}
         pixelsPerSecond={pixelsPerSecond}
-        currentTime={currentTime}
       />
     </div>
   )

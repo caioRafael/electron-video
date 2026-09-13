@@ -10,6 +10,9 @@ import {
   createEmptyTimeline,
   getAssetClipDuration,
   getAssetSourceDuration,
+  getActiveClip,
+  getClipSourceTime,
+  getTimelineContentDuration,
   getTimelineDuration,
   getTrackKindForAsset,
   getTrackLabel,
@@ -96,11 +99,45 @@ describe('getAssetClipDuration', () => {
   })
 })
 
+describe('getTimelineContentDuration', () => {
+  it('returns 0 for an empty timeline', () => {
+    expect(getTimelineContentDuration(createEmptyTimeline())).toBe(0)
+  })
+
+  it('uses the last clip end without the canvas minimum', () => {
+    expect(
+      getTimelineContentDuration({
+        tracks: [
+          {
+            id: 'track_1',
+            kind: 'video',
+            clips: [
+              createClip({ id: 'clip_a', start: 0, duration: 5 }),
+              createClip({ id: 'clip_b', start: 5, duration: 8 }),
+            ],
+          },
+        ],
+      }),
+    ).toBe(13)
+  })
+})
+
 describe('getTimelineDuration', () => {
   it('never goes below the minimum canvas duration', () => {
     expect(getTimelineDuration(createEmptyTimeline())).toBe(
       MIN_TIMELINE_DURATION,
     )
+    expect(
+      getTimelineDuration({
+        tracks: [
+          {
+            id: 'track_1',
+            kind: 'video',
+            clips: [createClip({ start: 0, duration: 13 })],
+          },
+        ],
+      }),
+    ).toBe(MIN_TIMELINE_DURATION)
   })
 
   it('uses the last clip end when it exceeds the minimum', () => {
@@ -123,6 +160,75 @@ describe('getTimelineDuration', () => {
         ],
       }),
     ).toBe(40)
+  })
+})
+
+describe('getClipSourceTime', () => {
+  it('offsets the source by the elapsed time inside the clip', () => {
+    expect(
+      getClipSourceTime(
+        createClip({ start: 10, duration: 8, sourceStart: 4 }),
+        13,
+      ),
+    ).toBe(7)
+  })
+})
+
+describe('getActiveClip', () => {
+  const track = {
+    id: 'track_1',
+    kind: 'video' as const,
+    clips: [
+      createClip({ id: 'clip_a', start: 2, duration: 3, sourceStart: 1 }),
+      createClip({ id: 'clip_b', start: 7, duration: 4, sourceStart: 0 }),
+    ],
+  }
+
+  it('returns null before the first clip', () => {
+    expect(getActiveClip(track, 0)).toBeNull()
+    expect(getActiveClip(track, 1.9)).toBeNull()
+  })
+
+  it('returns the clip at its exact start', () => {
+    expect(getActiveClip(track, 2)).toEqual({
+      clip: track.clips[0],
+      sourceTime: 1,
+    })
+  })
+
+  it('returns the clip while currentTime is inside it', () => {
+    expect(getActiveClip(track, 4)).toEqual({
+      clip: track.clips[0],
+      sourceTime: 3,
+    })
+  })
+
+  it('returns null at the exact end of a clip', () => {
+    expect(getActiveClip(track, 5)).toBeNull()
+  })
+
+  it('returns null between clips', () => {
+    expect(getActiveClip(track, 6)).toBeNull()
+  })
+
+  it('returns the next clip after a gap', () => {
+    expect(getActiveClip(track, 7)).toEqual({
+      clip: track.clips[1],
+      sourceTime: 0,
+    })
+  })
+
+  it('returns null for an empty track', () => {
+    expect(
+      getActiveClip(
+        {
+          id: 'track_empty',
+          kind: 'video',
+          clips: [],
+        },
+        0,
+      ),
+    ).toBeNull()
   })
 })
 

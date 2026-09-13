@@ -1,14 +1,19 @@
+import { PointerEvent } from 'react'
 import { RULER_HEIGHT, TRACK_LABEL_WIDTH } from './timeline.constants'
 import { formatRulerTime, getRulerTicks } from './timeline.utils'
 
 interface TimeLineRulerProps {
   duration: number
   pixelsPerSecond: number
+  onScrubStart: (event: PointerEvent<HTMLElement>) => void
+  onScrubMove: (event: PointerEvent<HTMLElement>) => void
 }
 
 export function TimeLineRuler({
   duration,
   pixelsPerSecond,
+  onScrubStart,
+  onScrubMove,
 }: TimeLineRulerProps) {
   const ticks = getRulerTicks(duration, pixelsPerSecond)
   const canvasWidth = duration * pixelsPerSecond
@@ -20,13 +25,15 @@ export function TimeLineRuler({
         style={{ width: TRACK_LABEL_WIDTH, height: RULER_HEIGHT }}
       />
       <div
-        className="relative shrink-0 select-none border-b bg-background"
+        className="relative shrink-0 cursor-pointer select-none border-b bg-background"
         style={{ width: canvasWidth, height: RULER_HEIGHT }}
+        onPointerDown={onScrubStart}
+        onPointerMove={onScrubMove}
       >
         {ticks.map((tick) => (
           <div
             key={tick.time}
-            className="absolute top-0 flex h-full flex-col items-start"
+            className="pointer-events-none absolute top-0 flex h-full flex-col items-start"
             style={{ left: tick.time * pixelsPerSecond }}
           >
             <span

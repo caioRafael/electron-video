@@ -1,7 +1,9 @@
 import { Button } from '@/components/ui/button'
+import { useEditorStore } from '@/stores/editor.store'
 import {
   MagnifyingGlassMinusIcon,
   MagnifyingGlassPlusIcon,
+  PauseIcon,
   PlayIcon,
   PlusIcon,
 } from '@phosphor-icons/react'
@@ -9,7 +11,6 @@ import { formatTimecode } from './timeline.utils'
 
 interface TimeLineHeaderProps {
   title: string
-  currentTime: number
   duration: number
   zoomPercent: number
   canZoomIn: boolean
@@ -20,7 +21,6 @@ interface TimeLineHeaderProps {
 
 export function TimeLineHeader({
   title,
-  currentTime,
   duration,
   zoomPercent,
   canZoomIn,
@@ -28,6 +28,10 @@ export function TimeLineHeader({
   onZoomIn,
   onZoomOut,
 }: TimeLineHeaderProps) {
+  const currentTime = useEditorStore((state) => state.currentTime)
+  const isPlaying = useEditorStore((state) => state.isPlaying)
+  const togglePlayback = useEditorStore((state) => state.togglePlayback)
+
   return (
     <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-2.5 py-2">
       <p className="min-w-0 truncate font-medium">{title}</p>
@@ -36,9 +40,11 @@ export function TimeLineHeader({
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="Reproduzir"
+          aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+          aria-pressed={isPlaying}
+          onClick={togglePlayback}
         >
-          <PlayIcon />
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
         </Button>
         <p className="tabular-nums text-muted-foreground">
           <span className="text-foreground">{formatTimecode(currentTime)}</span>
