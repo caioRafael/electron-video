@@ -25,6 +25,7 @@ import {
   updateWorkspaceProject,
   updateWorkspaceProjectTimeline,
 } from './project'
+import { cancelRenderVideo, promptAndRenderVideo } from './render/render-video'
 import {
   createWorkspace,
   getDirectoryPath,
@@ -147,6 +148,12 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('get-media-source', (_event, assetId: string) => {
     return getMediaSource(assetId)
+  })
+  ipcMain.handle('render-video', (event) => {
+    return promptAndRenderVideo(event.sender)
+  })
+  ipcMain.handle('cancel-render-video', () => {
+    cancelRenderVideo()
   })
 
   registerMediaProtocol()

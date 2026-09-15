@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@caiorafael/patchwork':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@electron-toolkit/preload':
         specifier: ^3.0.2
         version: 3.0.2(electron@39.8.10)
@@ -251,6 +254,10 @@ packages:
   '@babel/types@7.29.8':
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
+
+  '@caiorafael/patchwork@1.0.1':
+    resolution: {integrity: sha512-geQSIO85RxLb6AkMEPCkmpoDHGLWL9mYVzQctPNtRFWraDTt9YBCX8oM47EkLHtvuwV/g/Ws76UgTJ0Dfx5cVg==}
+    engines: {node: '>=20'}
 
   '@dotenvx/dotenvx@1.75.1':
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
@@ -4973,6 +4980,8 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
+
+  '@caiorafael/patchwork@1.0.1': {}
 
   '@dotenvx/dotenvx@1.75.1':
     dependencies:

@@ -1,6 +1,12 @@
-import { contextBridge, ipcRenderer, webUtils } from 'electron'
+import {
+  contextBridge,
+  ipcRenderer,
+  IpcRendererEvent,
+  webUtils,
+} from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { UpdateProjectTimelineInput } from '../shared/project'
+import { RenderProgress, RenderVideoResult } from '../shared/render'
 
 const api = {
   getPathForFile: (file: File): string => {
@@ -81,6 +87,25 @@ const api = {
         workspacePath,
         input,
       )
+    },
+  },
+  render: {
+    start: (): Promise<RenderVideoResult> => {
+      return ipcRenderer.invoke('render-video')
+    },
+    cancel: (): Promise<void> => {
+      return ipcRenderer.invoke('cancel-render-video')
+    },
+    onProgress: (listener: (progress: RenderProgress) => void) => {
+      const handler = (_event: IpcRendererEvent, progress: RenderProgress) => {
+        listener(progress)
+      }
+
+      ipcRenderer.on('render-video-progress', handler)
+
+      return () => {
+        ipcRenderer.removeListener('render-video-progress', handler)
+      }
     },
   },
 }

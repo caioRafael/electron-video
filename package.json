@@ -24,6 +24,7 @@
     "build:linux": "node scripts/prepare-ffmpeg.mjs --platform linux-x64 && npm run build && electron-builder --linux"
   },
   "dependencies": {
+    "@caiorafael/patchwork": "^1.0.1",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",

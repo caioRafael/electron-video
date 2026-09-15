@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getPlayerViewStatus, shouldMuteVideo } from './player.utils'
 import { useMediaElementSync } from './useMediaElementSync'
 import { useMediaSource } from './useMediaSource'
+import { PlayerHeader } from './PlayerHeader'
 
 export function Player() {
   const { isPlaying, activeVideoClip, activeAudioClip } = usePlayback()
@@ -68,8 +69,9 @@ export function Player() {
   }, [audioUrl])
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-black">
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+    <div className="flex h-full min-h-0 flex-col">
+      <PlayerHeader />
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black">
         <video
           ref={videoRef}
           src={showVideo ? (videoUrl ?? undefined) : undefined}

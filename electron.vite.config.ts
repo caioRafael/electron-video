@@ -6,7 +6,13 @@ import tailwindcss from '@tailwindcss/vite'
 const shared = resolve('src/shared')
 
 export default defineConfig({
-  main: {},
+  main: {
+    build: {
+      externalizeDeps: {
+        exclude: ['@caiorafael/patchwork'],
+      },
+    },
+  },
   preload: {},
   renderer: {
     resolve: {

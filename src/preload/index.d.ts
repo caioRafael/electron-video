@@ -10,6 +10,7 @@ import {
   UpdateProjectInput,
   UpdateProjectTimelineInput,
 } from '../shared/project'
+import { RenderProgress, RenderVideoResult } from '../shared/render'
 import { Workspace, WorkspaceEntry } from '../shared/workspace'
 
 interface WorkspaceApi {
@@ -53,11 +54,18 @@ interface ProjectApi {
   ) => Promise<Project>
 }
 
+interface RenderApi {
+  start: () => Promise<RenderVideoResult>
+  cancel: () => Promise<void>
+  onProgress: (listener: (progress: RenderProgress) => void) => () => void
+}
+
 interface AppApi {
   getPathForFile: (file: File) => string
   workspace: WorkspaceApi
   media: MediaApi
   project: ProjectApi
+  render: RenderApi
 }
 
 declare global {
